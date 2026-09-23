@@ -118,13 +118,13 @@ export function Skadeko() {
 
               <Stack gap={8}>
                 <Text fw={700}>Men kundene er ikke den eneste utfordringen. Du må også holde styr på:</Text>
-                <Introrad tittel="☕ Energi">
+                <Introrad tittel={`${MAALER_ETTER_ID.energi.emoji} Energi`}>
                   Drikk kaffe for å hente inn energi. Hvis energien når 0 %, er du tom for krefter.
                 </Introrad>
-                <Introrad tittel="🚽 Blære">
+                <Introrad tittel={`${MAALER_ETTER_ID.blaere.emoji} Blære`}>
                   Kaffe har en pris. Husk toalettpauser før blæren når 100 %.
                 </Introrad>
-                <Introrad tittel="😵 Stress">
+                <Introrad tittel={`${MAALER_ETTER_ID.stress.emoji} Stress`}>
                   Jo flere saker som hoper seg opp, desto mer stresset blir du. Når stresset når 100 %, har du møtt veggen.
                 </Introrad>
               </Stack>
