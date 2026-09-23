@@ -27,7 +27,7 @@ const EPOSTER: { fra: string; emne: string; mappe: Mappe }[] = [
 ];
 
 const SEKUNDER = SPILLTID_SEKUNDER;
-const ANTALL = 8;
+const ANTALL = 6;
 const TERSKEL = 110;
 
 export function InnboksNull({ onFerdig }: MiniSpillProps) {

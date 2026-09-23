@@ -9,7 +9,7 @@ import type { MiniSpillProps } from '../types/stresspause.types';
 import classes from './spill.module.css';
 
 const SEKUNDER = SPILLTID_SEKUNDER;
-const MÅL = 60;
+const MÅL = 40;
 const DELER = ['🔩', '⚙️', '📄', '🧻', '💥', '🪛', '📄', '🔧'];
 const ANSIKT = [
   { terskel: 0, fjes: '😏', replikk: 'PAPIRSTOPP I SKUFF 2' },

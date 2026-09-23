@@ -8,7 +8,7 @@ import classes from './spill.module.css';
 
 const SEKUNDER = SPILLTID_SEKUNDER;
 /** Faser i sekunder: klem, slipp, klem, slipp ... litt ujevnt så det ikke blir kjedelig. */
-const FASER = [2, 2, 2.5, 2, 1.5, 1.5, 1, 1, 1.5];
+const FASER = [2, 2, 1.5, 1.5, 1, 1, 1];
 const REPLIKKER = {
   riktig: ['Mm. Ballen godkjenner.', 'Jevnt og fint.', 'Du puster nesten som en voksen.', 'Ballen er fornøyd.'],
   feil: ['Ballen er forvirret.', 'Det var ikke det vi avtalte.', 'Bjarne himler med øynene.'],

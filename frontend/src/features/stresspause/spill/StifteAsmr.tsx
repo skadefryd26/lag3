@@ -7,13 +7,13 @@ import classes from './spill.module.css';
 
 const TAKT_MS = 600;
 const OPPTELLING = 3;
-/** Fire fraser à fire stift. Første frase er oppvarming, så skifter tempoet. */
-const FRASER = 4;
+/** Tre fraser à fire stift. Første frase er oppvarming, så skifter tempoet. */
+const FRASER = 3;
 const TEMPO_MS = [700, 520, 420, 620, 360];
 /** Hvor mange millisekunder av sporet som er synlig fra høyre kant til treffstreken. */
 const SYNLIG_MS = 2200;
 
-/** Lager tidspunktene (ms fra start) for hver stift. Maks ca. 13 s totalt. */
+/** Lager tidspunktene (ms fra start) for hver stift. Maks ca. 9,8 s totalt. */
 function lagSlag(): { tider: number[]; tempo: { fra: number; ms: number }[] } {
   const tider: number[] = [];
   const tempo: { fra: number; ms: number }[] = [];

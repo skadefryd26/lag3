@@ -12,8 +12,8 @@ import classes from './spill.module.css';
 const BREDDE = 6;
 const HØYDE = 14;
 const SEKUNDER = SPILLTID_SEKUNDER;
-/** Full effekt: f.eks. én linje + 15 brikker, eller to linjer + 5 brikker. Brikker teller, så ingen går tomhendt. */
-const MÅL = 2.5;
+/** Full effekt: f.eks. én linje + 10 brikker, eller to linjer. Brikker teller, så ingen går tomhendt. */
+const MÅL = 2;
 
 type Form = number[][];
 type Brikke = { form: Form; farge: number; x: number; y: number };

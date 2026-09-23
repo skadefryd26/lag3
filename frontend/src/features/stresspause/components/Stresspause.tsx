@@ -12,15 +12,7 @@ import {
   Title,
 } from '@mantine/core';
 import { lyd } from '../lib/lyd';
-import {
-  MAKS_BONUS,
-  MAKS_ENERGI,
-  MINSTE_EFFEKT,
-  bjarnesDom,
-  bjarnesKaffedom,
-  energiØkning,
-  stressReduksjon,
-} from '../lib/stress';
+import { bjarnesDom, bjarnesKaffedom, energiØkning, stressReduksjon } from '../lib/stress';
 import { MINI_SPILL } from '../spill/register';
 import type { MiniSpill, Resultat } from '../types/stresspause.types';
 import classes from './Stresspause.module.css';
@@ -211,32 +203,14 @@ export function Stresspause() {
 
         {aktivt && !spiller && !resultat && (
           <div className={classes.spillflate}>
-            <Stack align="center" gap="md" py="md" maw={560} mx="auto">
-              <div className={classes.stor}>{aktivt.emoji}</div>
+            <Stack align="center" gap="lg" py="xl" maw={560} mx="auto">
               <Title order={2} ta="center">
                 {aktivt.navn}
               </Title>
-              <Text c="dimmed" ta="center">
-                {aktivt.beskrivelse}
-              </Text>
-              <div className={classes.slikSpiller}>🎮 {aktivt.slikSpiller}</div>
-              <Text size="sm" fw={700} c={aktivt.anledning === 'kaffepause' ? 'yellow.4' : 'teal.3'}>
-                ⏱ Maks 15 sekunder ·{' '}
-                {aktivt.anledning === 'kaffepause'
-                  ? `Gir opptil +${MAKS_ENERGI} energi`
-                  : `Senker stress med opptil ${MINSTE_EFFEKT + MAKS_BONUS}`}
-              </Text>
-              <Group mt="sm">
-                <Button size="lg" color="teal" onClick={start}>
-                  Start ▶
-                </Button>
-                <Button size="lg" variant="subtle" color="gray" onClick={tilMenyen}>
-                  Tilbake
-                </Button>
-              </Group>
-              <Text size="xs" c="dimmed">
-                … eller trykk Enter
-              </Text>
+              <div className={classes.slikSpiller}>{aktivt.slikSpiller}</div>
+              <Button size="lg" color="teal" onClick={start}>
+                Start ▶
+              </Button>
             </Stack>
           </div>
         )}

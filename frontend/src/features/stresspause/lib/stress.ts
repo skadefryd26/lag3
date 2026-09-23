@@ -1,5 +1,5 @@
 /** Ingen mini-spill skal ta mer enn dette. */
-export const SPILLTID_SEKUNDER = 15;
+export const SPILLTID_SEKUNDER = 10;
 
 /** Man kan ikke tape: selv 0 % gir litt ro. Full pott gir mye. */
 export const MINSTE_EFFEKT = 5;
