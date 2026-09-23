@@ -5,7 +5,11 @@ import type { MaalerId, Maalere } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
 
 type Props = {
+  /** Poeng, level og målere vises først når arbeidsdagen er i gang. */
+  visStatus: boolean;
   poeng: number;
+  /** Vanskelighetsgrad 1–10. */
+  level: number;
   maalere: Maalere;
   /** Målere som tømmes akkurat nå — knappen deres er låst til de er i mål. */
   tommes: MaalerId[];
@@ -15,7 +19,14 @@ type Props = {
   onMeny: () => void;
 };
 
-export function Hud({ poeng, maalere, tommes, onTiltak, menyApen, onMeny }: Props) {
+/** Hvit i starten, gul i midten, rød mot slutten. */
+function levelFarge(level: number) {
+  if (level >= 8) return '#ff8787';
+  if (level >= 5) return '#ffd43b';
+  return 'white';
+}
+
+export function Hud({ visStatus, poeng, level, maalere, tommes, onTiltak, menyApen, onMeny }: Props) {
   return (
     <Group justify="space-between" align="center" wrap="wrap" gap="md">
       <Group gap="sm" wrap="nowrap">
@@ -45,85 +56,97 @@ export function Hud({ poeng, maalere, tommes, onTiltak, menyApen, onMeny }: Prop
         </Stack>
       </Group>
 
-      <Group
-        gap="xl"
-        align="center"
-        wrap="nowrap"
-        px="lg"
-        py={12}
-        style={{
-          borderRadius: 14,
-          background: 'rgba(0,0,0,0.2)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          backdropFilter: 'blur(6px)',
-        }}
-      >
-        <Stack gap={2} align="center" miw={90}>
-          <Text fz={40} fw={900} c="white" lh={1}>
-            {poeng}
-          </Text>
-          <Text fz={13} c="rgba(255,255,255,0.75)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
-            poeng
-          </Text>
-        </Stack>
+      {visStatus && (
+        <Group
+          gap="md"
+          align="center"
+          wrap="nowrap"
+          px="lg"
+          py={12}
+          style={{
+            borderRadius: 14,
+            background: 'rgba(0,0,0,0.2)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <Stack gap={2} align="center" miw={70}>
+            <Text fz={40} fw={900} c="white" lh={1}>
+              {poeng}
+            </Text>
+            <Text fz={13} c="rgba(255,255,255,0.75)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
+              poeng
+            </Text>
+          </Stack>
 
-        <Divider orientation="vertical" color="rgba(255,255,255,0.2)" />
+          <Stack gap={2} align="center" miw={70}>
+            {/* key: ny animasjon hver gang levelet øker. */}
+            <Text key={level} fz={40} fw={900} c={levelFarge(level)} lh={1} className={classes.nyttLevel}>
+              {level}
+            </Text>
+            <Text fz={13} c="rgba(255,255,255,0.75)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
+              level
+            </Text>
+          </Stack>
 
-        <Group gap="lg" wrap="nowrap" align="flex-start" aria-label="Din tilstand">
-          {MAALERE.map((konfig) => {
-            const verdi = maalere[konfig.id];
-            const kritisk = erKritisk(konfig, verdi);
-            const grad = alvorlighet(konfig, verdi);
+          <Divider orientation="vertical" color="rgba(255,255,255,0.2)" />
 
-            return (
-              <Stack key={konfig.id} gap={8} w={160}>
-                <Group gap={4} wrap="nowrap" justify="space-between">
-                  <Text fz={15} fw={700} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.9)'}>
-                    {konfig.emoji} {konfig.navn}
-                  </Text>
-                  <Text fz={15} fw={800} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.75)'}>
-                    {Math.round(verdi)}%
-                  </Text>
-                </Group>
+          <Group gap="md" wrap="nowrap" align="flex-start" aria-label="Din tilstand">
+            {MAALERE.map((konfig) => {
+              const verdi = maalere[konfig.id];
+              const kritisk = erKritisk(konfig, verdi);
+              const grad = alvorlighet(konfig, verdi);
 
-                {/* Oppdateres hver frame: en CSS-overgang ville startet på nytt hele tiden og fått baren til å fryse. */}
-                <Progress
-                  size={14}
-                  radius="xl"
-                  bg="rgba(255,255,255,0.18)"
-                  value={verdi}
-                  color={konfig.farge}
-                  animated={kritisk}
-                  striped={kritisk}
-                  transitionDuration={0}
-                  aria-label={`${konfig.navn}: ${Math.round(verdi)} prosent`}
-                />
+              return (
+                <Stack key={konfig.id} gap={8} w={136}>
+                  <Group gap={4} wrap="nowrap" justify="space-between">
+                    <Text fz={15} fw={700} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.9)'}>
+                      {konfig.emoji} {konfig.navn}
+                    </Text>
+                    <Text fz={15} fw={800} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.75)'}>
+                      {Math.round(verdi)}%
+                    </Text>
+                  </Group>
 
-                <Tooltip
-                  label={konfig.tiltakBeskrivelse}
-                  withArrow
-                  openDelay={400}
-                  multiline
-                  w={230}
-                >
-                  <Button
-                    size="md"
-                    variant={kritisk ? 'filled' : 'white'}
-                    color={kritisk ? konfig.farge : undefined}
-                    fullWidth
-                    disabled={!onTiltak || tommes.includes(konfig.id)}
-                    onClick={() => onTiltak?.(konfig.id)}
-                    className={kritisk && grad > 0.85 ? classes.roper : undefined}
-                    styles={{ label: { fontSize: 15, fontWeight: 800 } }}
+                  {/* Oppdateres hver frame: en CSS-overgang ville startet på nytt hele tiden og fått baren til å fryse. */}
+                  <Progress
+                    size={14}
+                    radius="xl"
+                    bg="rgba(255,255,255,0.18)"
+                    value={verdi}
+                    color={konfig.farge}
+                    animated={kritisk}
+                    striped={kritisk}
+                    transitionDuration={0}
+                    aria-label={`${konfig.navn}: ${Math.round(verdi)} prosent`}
+                  />
+
+                  <Tooltip
+                    label={konfig.tiltakBeskrivelse}
+                    withArrow
+                    openDelay={400}
+                    multiline
+                    w={230}
                   >
-                    {tommes.includes(konfig.id) ? (konfig.knappUnderveis ?? konfig.knapp) : konfig.knapp}
-                  </Button>
-                </Tooltip>
-              </Stack>
-            );
-          })}
+                    <Button
+                      size="md"
+                      variant={kritisk ? 'filled' : 'white'}
+                      color={kritisk ? konfig.farge : undefined}
+                      fullWidth
+                      disabled={!onTiltak || tommes.includes(konfig.id)}
+                      onClick={() => onTiltak?.(konfig.id)}
+                      className={kritisk && grad > 0.85 ? classes.roper : undefined}
+                      styles={{ root: { paddingInline: 6 }, label: { fontSize: 15, fontWeight: 800 } }}
+                    >
+                      {tommes.includes(konfig.id) ? (konfig.knappUnderveis ?? konfig.knapp) : konfig.knapp}
+                    </Button>
+                  </Tooltip>
+                </Stack>
+              );
+            })}
+          </Group>
         </Group>
-      </Group>
+      )}
     </Group>
   );
 }

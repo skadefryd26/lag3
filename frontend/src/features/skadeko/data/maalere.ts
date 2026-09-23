@@ -7,7 +7,7 @@ import type { MaalerId } from '../types/skadeko.types';
  *
  * Hver måler har et tiltak bak knappen under stolpen: enten et minispill
  * (koblet på i `components/tiltak/registry.ts`), eller — med `tommingPerSekund`
- * — en måler som tømmes mens skadekøen går videre.
+ * — en måler som tømmes mens skadekøen står stille.
  */
 export type MaalerKonfig = {
   id: MaalerId;
@@ -22,8 +22,8 @@ export type MaalerKonfig = {
   /** Hvor mange prosentpoeng måleren beveger seg per sekund mens du spiller. */
   driftPerSekund: number;
   /**
-   * Satt = tiltaket er ikke et minispill. Knappen tømmer måleren med så mange
-   * prosentpoeng per sekund mens skadekøen går videre, til den er i mål.
+   * Satt = tiltaket er ikke et minispill. Knappen pauser skadekøen og tømmer
+   * måleren med så mange prosentpoeng per sekund, til den er i mål.
    */
   tommingPerSekund?: number;
   /** Høyeste nivå tiltaket kan løfte en «tappes»-måler til. */
@@ -69,7 +69,7 @@ export const MAALERE: MaalerKonfig[] = [
     knapp: 'Gå på do',
     knappUnderveis: 'På do… 🚽',
     tiltakTittel: 'Turen til toalettet',
-    tiltakBeskrivelse: 'Blæra tømmes mens køen går videre. Sakene venter ikke på deg.',
+    tiltakBeskrivelse: 'Blæra tømmes mens skadekøen står stille.',
     bjarneKommentar:
       'Igjen? Jeg har vært oppe i 400 dager uten pause. Bare så det er sagt.',
     krisetekst: 'Blæra ga opp før deg. Vi sier ikke mer.',

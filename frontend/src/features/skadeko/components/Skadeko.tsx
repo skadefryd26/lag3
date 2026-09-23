@@ -1,5 +1,5 @@
 import { IconCircleFilled, IconClockPlay, IconFlame } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { Highscores, HighscoreInnmelding } from './Highscores';
 import { Sidemeny } from './Sidemeny';
@@ -31,6 +31,17 @@ export function Skadeko() {
 
   const { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming } = useMaalere(vedSkrivebordet);
 
+  // Do-turen er over (tom blære eller avbrutt): køen går videre.
+  const varBorte = useRef(false);
+  const { fortsett } = spill;
+  useEffect(() => {
+    if (tommes.length > 0) varBorte.current = true;
+    else if (varBorte.current) {
+      varBorte.current = false;
+      fortsett();
+    }
+  }, [tommes, fortsett]);
+
   // En måler i krise (energi 0 %, blære eller stress 100 %) avslutter dagen.
   const { tapDagen } = spill;
   const krise = spill.tilstand === 'spiller' ? MAALERE.find((m) => iKrise(m, maalere[m.id])) : undefined;
@@ -48,6 +59,7 @@ export function Skadeko() {
     (id: MaalerId) => {
       // Noen tiltak er ikke et minispill, men noe som skjer mens køen går videre.
       if (MAALER_ETTER_ID[id].tommingPerSekund) {
+        spill.pause();
         startTomming(id);
         return;
       }
@@ -95,7 +107,9 @@ export function Skadeko() {
       >
         <Container size="lg" px={0}>
           <Hud
+            visStatus={spill.tilstand !== 'ikke-startet'}
             poeng={spill.poeng}
+            level={spill.level}
             maalere={maalere}
             tommes={tommes}
             onTiltak={spill.tilstand === 'spiller' ? apneTiltak : null}

@@ -105,6 +105,16 @@
   animation: puls 1.1s ease-in-out infinite;
 }
 
+.nyttLevel {
+  animation: nytt-level 0.6s ease-out;
+}
+
+@keyframes nytt-level {
+  0% { transform: scale(1.8); }
+  60% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
 .plassholder {
   border: 1px dashed var(--mantine-color-violet-5);
 }
@@ -166,6 +176,7 @@
   .haster,
   .samtale,
   .roper,
+  .nyttLevel,
   .tenker::after {
     animation: none;
   }
