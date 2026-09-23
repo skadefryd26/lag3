@@ -1,62 +1,62 @@
 .skrivebord {
-  background:
-    repeating-linear-gradient(
-      100deg,
-      rgba(0, 0, 0, 0.05) 0 2px,
-      transparent 2px 22px
-    ),
-    linear-gradient(160deg, #c98b4f 0%, #b0763f 100%);
-  border: 8px solid #8a5a2b;
-  border-radius: 18px;
-  padding: 18px;
+  background: #e9ecef;
+  border: 1px solid #dee2e6;
+  border-radius: 16px;
+  padding: 20px;
   min-height: 430px;
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.35);
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
   align-content: start;
 }
 
 .sak {
   font: inherit;
-  color: #2b2d42;
+  color: #212529;
   cursor: pointer;
-  background: #fffdf7;
-  border: none;
-  border-radius: 6px;
-  padding: 12px 12px 10px;
-  box-shadow: 4px 5px 0 rgba(0, 0, 0, 0.3);
-  transform: rotate(-1.2deg);
-  animation: dal-ned 0.28s ease-out;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 4px 12px rgba(16, 24, 40, 0.06);
+  animation: dal-ned 0.25s ease-out;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   position: relative;
   text-align: left;
 }
 
-.sak:nth-child(even) {
-  transform: rotate(1.6deg);
-}
-
 .sak:hover {
-  transform: rotate(0deg) scale(1.05);
-  box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgba(16, 24, 40, 0.05),
+    0 10px 24px rgba(16, 24, 40, 0.1);
 }
 
 .sak:focus-visible {
-  outline: 4px solid #5e60ce;
+  outline: 3px solid #7048e8;
   outline-offset: 2px;
 }
 
+.ikonboks {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
 .kant_enkel {
-  border-top: 6px solid #2f9e44;
+  border-left: 4px solid #2f9e44;
 }
 
 .kant_middels {
-  border-top: 6px solid #f08c00;
+  border-left: 4px solid #f08c00;
 }
 
 .kant_kompleks {
-  border-top: 6px solid #e03131;
+  border-left: 4px solid #e03131;
 }
 
 .haster {
@@ -68,19 +68,18 @@
   top: 8px;
   right: 8px;
   font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 2px 6px;
-  border: 2px solid #ef476f;
-  color: #ef476f;
-  border-radius: 4px;
-  transform: rotate(9deg);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  background: #fff5f5;
+  color: #e03131;
+  border-radius: 999px;
 }
 
 .tomt {
   grid-column: 1 / -1;
   text-align: center;
-  color: #fff5e6;
+  color: #868e96;
   padding: 70px 0;
   opacity: 0.9;
 }
@@ -112,7 +111,7 @@
 
 @keyframes dal-ned {
   from {
-    transform: translateY(-34px) rotate(-6deg);
+    transform: translateY(-12px);
     opacity: 0;
   }
 }

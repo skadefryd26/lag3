@@ -8,16 +8,21 @@ import type { MaalerId, Maalere } from '../types/skadeko.types';
  * Målerne drifter sakte mens du spiller, og står stille når spillet er pauset
  * — for eksempel mens et tiltak er åpent.
  *
- * Minispillene finnes ikke ennå. Når de kommer, kaller de `paavirk(id, n)` med
- * hvor mange prosentpoeng spilleren fortjente. Det er hele sømmen.
+ * Minispillene kaller `paavirk(id, n)` med hvor mange prosentpoeng spilleren
+ * fortjente. Tiltak uten minispill (do-turen) bruker `startTomming(id)`.
  */
 export function useMaalere(aktiv: boolean) {
   const [maalere, setMaalere] = useState<Maalere>({ ...STARTVERDIER });
+  /** Målere som tømmes akkurat nå (f.eks. blæra mens du er på do). */
+  const [tommes, setTommes] = useState<MaalerId[]>([]);
+  const tommesRef = useRef<MaalerId[]>([]);
+  tommesRef.current = tommes;
   const sist = useRef(0);
   const frame = useRef(0);
 
   const nullstill = useCallback(() => {
     setMaalere({ ...STARTVERDIER });
+    setTommes([]);
     sist.current = 0;
   }, []);
 
@@ -33,6 +38,29 @@ export function useMaalere(aktiv: boolean) {
       return { ...forrige, [id]: klem(ny) };
     });
   }, []);
+
+  /** Starter tømming av en måler som har `tommingPerSekund`. Skadekøen går videre imens. */
+  const startTomming = useCallback((id: MaalerId) => {
+    setTommes((t) => (t.includes(id) ? t : [...t, id]));
+  }, []);
+
+  /** Avbryter tømmingen før den er i mål (f.eks. «løp tilbake til pulten»). */
+  const stoppTomming = useCallback((id: MaalerId) => {
+    setTommes((t) => t.filter((x) => x !== id));
+  }, []);
+
+  // Stopp tømmingen når måleren er i mål. Nøkkelen endres bare når en måler
+  // når målet, ikke hver frame — ellers ville timeren aldri rukket å fyre.
+  const iMaal = tommes
+    .filter((id) => maalere[id] === (MAALER_ETTER_ID[id].retning === 'tappes' ? 100 : 0))
+    .join(',');
+  useEffect(() => {
+    if (!iMaal) return;
+    const ferdige = iMaal.split(',');
+    // Litt pusterom i mål, så «ferdig» rekker å vises før modalen lukkes.
+    const id = setTimeout(() => setTommes((t) => t.filter((m) => !ferdige.includes(m))), 900);
+    return () => clearTimeout(id);
+  }, [iMaal]);
 
   // Driften. Én loop for alle tre.
   useEffect(() => {
@@ -52,9 +80,11 @@ export function useMaalere(aktiv: boolean) {
           const neste = { ...forrige };
           for (const konfig of MAALERE) {
             const retning = konfig.retning === 'tappes' ? -1 : 1;
-            neste[konfig.id] = klem(
-              forrige[konfig.id] + konfig.driftPerSekund * sekunder * retning,
-            );
+            // Under tømming går måleren i spillerens favør i stedet for å drifte.
+            const fart = tommesRef.current.includes(konfig.id)
+              ? -(konfig.tommingPerSekund ?? 0)
+              : konfig.driftPerSekund;
+            neste[konfig.id] = klem(forrige[konfig.id] + fart * sekunder * retning);
           }
           return neste;
         });
@@ -67,7 +97,7 @@ export function useMaalere(aktiv: boolean) {
     return () => cancelAnimationFrame(frame.current);
   }, [aktiv]);
 
-  return { maalere, paavirk, nullstill };
+  return { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming };
 }
 
 function klem(verdi: number): number {

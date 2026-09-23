@@ -1,13 +1,13 @@
 import { createTheme } from '@mantine/core';
 
+const FONT = '"Segoe UI", "Inter", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif';
+
 export const theme = createTheme({
   primaryColor: 'violet',
   defaultRadius: 'md',
-  fontFamily:
-    '"Trebuchet MS", "Chalkboard SE", "Comic Sans MS", ui-rounded, system-ui, sans-serif',
+  fontFamily: FONT,
   headings: {
-    fontFamily:
-      '"Trebuchet MS", "Chalkboard SE", "Comic Sans MS", ui-rounded, system-ui, sans-serif',
-    fontWeight: '800',
+    fontFamily: FONT,
+    fontWeight: '700',
   },
 });

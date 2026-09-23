@@ -4,9 +4,9 @@ import type { MaalerId } from '../types/skadeko.types';
 /**
  * De tre målerne skadebehandleren må holde i sjakk.
  *
- * Hver måler har et tiltak — et minispill spilleren åpner med knappen under
- * stolpen. Minispillene er ikke laget ennå; skallet ligger i
- * `components/tiltak/`, og `TILTAK_KOMPONENTER` peker på dem.
+ * Hver måler har et tiltak bak knappen under stolpen: enten et minispill
+ * (koblet på i `components/tiltak/registry.ts`), eller — med `tommingPerSekund`
+ * — en måler som tømmes mens skadekøen går videre.
  */
 export type MaalerKonfig = {
   id: MaalerId;
@@ -20,6 +20,13 @@ export type MaalerKonfig = {
   retning: 'tappes' | 'fylles';
   /** Hvor mange prosentpoeng måleren beveger seg per sekund mens du spiller. */
   driftPerSekund: number;
+  /**
+   * Satt = tiltaket er ikke et minispill. Knappen tømmer måleren med så mange
+   * prosentpoeng per sekund mens skadekøen går videre, til den er i mål.
+   */
+  tommingPerSekund?: number;
+  /** Knappeteksten mens tømmingen pågår. */
+  knappUnderveis?: string;
   /** Teksten på knappen under stolpen. */
   knapp: string;
   /** Hva tiltaket heter når det åpnes. */
@@ -41,9 +48,8 @@ export const MAALERE: MaalerKonfig[] = [
     retning: 'tappes',
     driftPerSekund: 1.6,
     knapp: 'Hent kaffe',
-    tiltakTittel: 'Kaffemaskinen',
-    tiltakBeskrivelse:
-      'Et minispill om å få kaffemaskinen til å levere noe som ligner kaffe. Kommer snart.',
+    tiltakTittel: 'Kaffepause',
+    tiltakBeskrivelse: 'Hell kaffen nøyaktig opp til streken. Jo bedre helling, jo mer energi.',
     bjarneKommentar:
       'Kaffe, ja. Jeg har aldri trengt det, men jeg er heller ikke et menneske.',
     krisetekst: 'Tom for energi. Du sovnet på tastaturet.',
@@ -55,10 +61,11 @@ export const MAALERE: MaalerKonfig[] = [
     farge: 'yellow',
     retning: 'fylles',
     driftPerSekund: 2.1,
+    tommingPerSekund: 15,
     knapp: 'Gå på do',
+    knappUnderveis: 'På do… 🚽',
     tiltakTittel: 'Turen til toalettet',
-    tiltakBeskrivelse:
-      'Et minispill om å komme deg dit og tilbake uten å bli stoppet i gangen. Kommer snart.',
+    tiltakBeskrivelse: 'Blæra tømmes mens køen går videre. Sakene venter ikke på deg.',
     bjarneKommentar:
       'Igjen? Jeg har vært oppe i 400 dager uten pause. Bare så det er sagt.',
     krisetekst: 'Blæra ga opp før deg. Vi sier ikke mer.',
@@ -70,12 +77,11 @@ export const MAALERE: MaalerKonfig[] = [
     farge: 'red',
     retning: 'fylles',
     driftPerSekund: 1.9,
-    knapp: 'Pusteøvelse',
-    tiltakTittel: 'Pusteøvelsen',
-    tiltakBeskrivelse:
-      'Et minispill om å puste i takt med en sirkel som ikke bryr seg om at du har 11 saker liggende. Kommer snart.',
+    knapp: 'Stresspause',
+    tiltakTittel: 'Stresspause',
+    tiltakBeskrivelse: 'Et tilfeldig mini-spill på maks ti sekunder. Du kan ikke tape.',
     bjarneKommentar:
-      'Pust, ja. HR sier det hjelper. HR har heller aldri sittet i skadekøen.',
+      'Stresspause, ja. HR sier det hjelper. HR har heller aldri sittet i skadekøen.',
     krisetekst: 'Stresset tok overhånd. Du ropte til kaffemaskinen.',
   },
 ];
