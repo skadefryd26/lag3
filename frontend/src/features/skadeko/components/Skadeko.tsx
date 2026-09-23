@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
-import { Box, Button, Container, Notification, Paper, Stack, Text, Title } from '@mantine/core';
+import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { Hud } from './Hud';
 import { Medarbeidersamtale } from './Medarbeidersamtale';
+import { SakDialog } from './SakDialog';
 import { SakKort } from './SakKort';
 import { TiltakModal } from './tiltak/TiltakModal';
 import { useMaalere } from '../hooks/useMaalere';
@@ -12,12 +13,12 @@ import classes from './Skadeko.module.css';
 export function Skadeko() {
   const spill = useSkadeko();
   const [aktivtTiltak, setAktivtTiltak] = useState<MaalerId | null>(null);
+  const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
 
   // Målerne drifter bare mens du faktisk sitter på skrivebordet.
   const { maalere, paavirk, nullstill } = useMaalere(
     spill.tilstand === 'spiller' && !spill.pauset,
   );
-  const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
 
   const apneTiltak = useCallback(
     (id: MaalerId) => {
@@ -80,9 +81,10 @@ export function Skadeko() {
               </Text>
               <Title order={2}>God morgen, skadebehandler!</Title>
               <Text c="dimmed">
-                Skadesakene strømmer inn. Klikk på en sak for å behandle den før kunden går lei.
-                Mister du tre kunder, er du offisielt <b>sykmeldt</b> — og da kaller Bjarne deg
-                inn til medarbeidersamtale.
+                Skadesakene strømmer inn. Klikk på en sak, les hva kunden skriver, og velg riktig
+                håndtering. Riktig svar gir poeng — mer for vanskelige saker, raske svar og flere
+                riktige på rad. Feil svar koster. Mister du tre kunder, er du offisielt{' '}
+                <b>sykmeldt</b> — og da kaller Bjarne deg inn til medarbeidersamtale.
               </Text>
               <Text c="dimmed" fz="sm">
                 Samtidig tappes <b>energien</b>, <b>blæra</b> fylles og <b>stresset</b> stiger.
@@ -97,21 +99,37 @@ export function Skadeko() {
         )}
 
         {spill.tilstand === 'spiller' && (
-          <div className={classes.skrivebord} aria-live="polite">
-            {spill.saker.length === 0 ? (
-              <Text className={classes.tomt}>Skrivebordet er tomt. Nyt det mens det varer.</Text>
-            ) : (
-              spill.saker.map((sak) => (
-                <SakKort key={sak.id} sak={sak} onBehandle={spill.behandleSak} />
-              ))
-            )}
-          </div>
+          <Stack gap="sm">
+            <Group justify="space-between">
+              <Group gap="xs">
+                <Badge color="green" variant="light">🟢 Enkel · 10p · god tid</Badge>
+                <Badge color="yellow" variant="light">🟡 Middels · 20p</Badge>
+                <Badge color="red" variant="light">🔴 Kompleks · 30p · kort tid</Badge>
+              </Group>
+              {spill.combo >= 2 && (
+                <Badge color="orange" size="lg" variant="filled">
+                  🔥 Combo x{spill.combo}
+                </Badge>
+              )}
+            </Group>
+            <div className={classes.skrivebord} aria-live="polite">
+              {spill.saker.length === 0 ? (
+                <Text className={classes.tomt}>Skrivebordet er tomt. Nyt det mens det varer.</Text>
+              ) : (
+                spill.saker.map((sak) => (
+                  <SakKort key={sak.id} sak={sak} onApne={spill.apneSak} />
+                ))
+              )}
+            </div>
+          </Stack>
         )}
 
         {spill.tilstand === 'ferdig' && spill.resultat && (
           <Medarbeidersamtale resultat={spill.resultat} onNyDag={nyDag} />
         )}
       </Container>
+
+      <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
 
       <TiltakModal
         aktiv={aktivtTiltak}
@@ -126,7 +144,7 @@ export function Skadeko() {
           color="teal"
           onClose={() => setTiltakskvittering(null)}
           pos="fixed"
-          bottom={24}
+          bottom={156}
           left="50%"
           style={{ transform: 'translateX(-50%)', zIndex: 5 }}
         >
@@ -134,7 +152,21 @@ export function Skadeko() {
         </Notification>
       )}
 
-      {spill.tilstand === 'spiller' && spill.tapsmelding && !tiltakskvittering && (
+      {spill.tilstand === 'spiller' && spill.tilbakemelding && (
+        <Notification
+          key={spill.tilbakemelding.id}
+          color={spill.tilbakemelding.riktig ? 'teal' : 'orange'}
+          withCloseButton={false}
+          pos="fixed"
+          bottom={90}
+          left="50%"
+          style={{ transform: 'translateX(-50%)', zIndex: 5 }}
+        >
+          {spill.tilbakemelding.tekst}
+        </Notification>
+      )}
+
+      {spill.tilstand === 'spiller' && spill.tapsmelding && (
         <Notification
           key={spill.tapsmelding + spill.tapt}
           color="red"
