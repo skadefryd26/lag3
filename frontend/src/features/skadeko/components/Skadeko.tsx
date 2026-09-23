@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, Container, Notification, Paper, Stack, Text, Title } from '@mantine/core';
+import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { Highscores, HighscoreInnmelding } from './Highscores';
 import { Sidemeny } from './Sidemeny';
 import { useHighscores } from '../hooks/useHighscores';
 import { Hud } from './Hud';
 import { Medarbeidersamtale } from './Medarbeidersamtale';
+import { SakDialog } from './SakDialog';
 import { SakKort } from './SakKort';
 import { useSkadeko } from '../hooks/useSkadeko';
 import classes from './Skadeko.module.css';
@@ -59,9 +60,10 @@ export function Skadeko() {
               </Text>
               <Title order={2}>God morgen, skadebehandler!</Title>
               <Text c="dimmed">
-                Skadesakene strømmer inn. Klikk på en sak for å behandle den før kunden går lei.
-                Mister du tre kunder, er du offisielt <b>sykmeldt</b> — og da kaller Bjarne deg
-                inn til medarbeidersamtale.
+                Skadesakene strømmer inn. Klikk på en sak, les hva kunden skriver, og velg riktig
+                håndtering. Riktig svar gir poeng — mer for vanskelige saker, raske svar og flere
+                riktige på rad. Feil svar koster. Mister du tre kunder, er du offisielt{' '}
+                <b>sykmeldt</b> — og da kaller Bjarne deg inn til medarbeidersamtale.
               </Text>
               <Button size="lg" color="teal" onClick={spill.startDagen}>
                 Stemple inn ☕
@@ -70,16 +72,30 @@ export function Skadeko() {
           </Paper>
         )}
 
-        {spill.tilstand === 'spiller' && (
-          <div className={classes.skrivebord} aria-live="polite">
-            {spill.saker.length === 0 ? (
-              <Text className={classes.tomt}>Skrivebordet er tomt. Nyt det mens det varer.</Text>
-            ) : (
-              spill.saker.map((sak) => (
-                <SakKort key={sak.id} sak={sak} onBehandle={spill.behandleSak} />
-              ))
-            )}
-          </div>
+          {spill.tilstand === 'spiller' && (
+          <Stack gap="sm">
+            <Group justify="space-between">
+              <Group gap="xs">
+                <Badge color="green" variant="light">🟢 Enkel · 10p · god tid</Badge>
+                <Badge color="yellow" variant="light">🟡 Middels · 20p</Badge>
+                <Badge color="red" variant="light">🔴 Kompleks · 30p · kort tid</Badge>
+              </Group>
+              {spill.combo >= 2 && (
+                <Badge color="orange" size="lg" variant="filled">
+                  🔥 Combo x{spill.combo}
+                </Badge>
+              )}
+            </Group>
+            <div className={classes.skrivebord} aria-live="polite">
+              {spill.saker.length === 0 ? (
+                <Text className={classes.tomt}>Skrivebordet er tomt. Nyt det mens det varer.</Text>
+              ) : (
+                spill.saker.map((sak) => (
+                  <SakKort key={sak.id} sak={sak} onApne={spill.apneSak} />
+                ))
+              )}
+            </div>
+          </Stack>
         )}
 
         {spill.tilstand === 'ferdig' && spill.resultat && (
@@ -120,6 +136,22 @@ export function Skadeko() {
           setVisHighscores(true);
         }}
       />
+
+      <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
+
+      {spill.tilstand === 'spiller' && spill.tilbakemelding && (
+        <Notification
+          key={spill.tilbakemelding.id}
+          color={spill.tilbakemelding.riktig ? 'teal' : 'orange'}
+          withCloseButton={false}
+          pos="fixed"
+          bottom={90}
+          left="50%"
+          style={{ transform: 'translateX(-50%)', zIndex: 5 }}
+        >
+          {spill.tilbakemelding.tekst}
+        </Notification>
+      )}
 
       {spill.tilstand === 'spiller' && spill.tapsmelding && (
         <Notification

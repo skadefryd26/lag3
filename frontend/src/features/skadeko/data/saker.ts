@@ -53,8 +53,8 @@ export const TILSTANDER = [
 
 export const TITLER = [
   { fra: 0, navn: 'Praktikant' },
-  { fra: 150, navn: 'Skadebehandler' },
-  { fra: 350, navn: 'Skade-Ninja' },
+  { fra: 200, navn: 'Skadebehandler' },
+  { fra: 500, navn: 'Skade-Ninja' },
 ];
 
 export function finnTittel(poeng: number): string {
