@@ -60,10 +60,10 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
 
       {visStatus && (
         <Group
-          gap="md"
+          gap="sm"
           align="center"
           wrap="nowrap"
-          px="lg"
+          px="md"
           py={12}
           style={{
             borderRadius: 14,
@@ -72,7 +72,7 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
             backdropFilter: 'blur(6px)',
           }}
         >
-          <Stack gap={2} align="center" miw={70}>
+          <Stack gap={2} align="center" miw={56}>
             <Text fz={40} fw={900} c="white" lh={1}>
               {poeng}
             </Text>
@@ -81,7 +81,7 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
             </Text>
           </Stack>
 
-          <Stack gap={2} align="center" miw={70}>
+          <Stack gap={2} align="center" miw={56}>
             {/* key: ny animasjon hver gang levelet øker. */}
             <Text key={level} fz={40} fw={900} c={levelFarge(level)} lh={1} className={classes.nyttLevel}>
               {level}
@@ -91,8 +91,8 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
             </Text>
           </Stack>
 
-          <Stack gap={2} align="center" miw={70} aria-label={`${livIgjen} av ${liv} liv igjen`}>
-            <Group gap={2} wrap="nowrap" lh={1} fz={26}>
+          <Stack gap={2} align="center" miw={56} aria-label={`${livIgjen} av ${liv} liv igjen`}>
+            <Group gap={0} wrap="nowrap" lh={1} fz={20}>
               {Array.from({ length: liv }, (_, i) => (
                 // key med livIgjen: hjertet som nettopp ble mistet, animeres.
                 <span key={`${i}-${i < livIgjen}`} className={i < livIgjen ? undefined : classes.mistetLiv}>
@@ -107,14 +107,14 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
 
           <Divider orientation="vertical" color="rgba(255,255,255,0.2)" />
 
-          <Group gap="md" wrap="nowrap" align="flex-start" aria-label="Din tilstand">
+          <Group gap="sm" wrap="nowrap" align="flex-start" aria-label="Din tilstand">
             {MAALERE.map((konfig) => {
               const verdi = maalere[konfig.id];
               const kritisk = erKritisk(konfig, verdi);
               const grad = alvorlighet(konfig, verdi);
 
               return (
-                <Stack key={konfig.id} gap={8} w={136}>
+                <Stack key={konfig.id} gap={8} w={122}>
                   <Group gap={4} wrap="nowrap" justify="space-between">
                     <Text fz={15} fw={700} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.9)'}>
                       {konfig.emoji} {konfig.navn}
@@ -152,7 +152,7 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
                       disabled={!onTiltak || tommes.includes(konfig.id)}
                       onClick={() => onTiltak?.(konfig.id)}
                       className={kritisk && grad > 0.85 ? classes.roper : undefined}
-                      styles={{ root: { paddingInline: 6 }, label: { fontSize: 15, fontWeight: 800 } }}
+                      styles={{ root: { paddingInline: 6 }, label: { fontSize: 14, fontWeight: 800 } }}
                     >
                       {tommes.includes(konfig.id) ? (konfig.knappUnderveis ?? konfig.knapp) : konfig.knapp}
                     </Button>
