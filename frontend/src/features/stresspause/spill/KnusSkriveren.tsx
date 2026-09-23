@@ -9,15 +9,17 @@ import type { MiniSpillProps } from '../types/stresspause.types';
 import classes from './spill.module.css';
 
 const SEKUNDER = SPILLTID_SEKUNDER;
-const MÅL = 40;
+/** Slag som gir full effekt — da er skriveren ferdig. */
+const MÅL = 30;
 const DELER = ['🔩', '⚙️', '📄', '🧻', '💥', '🪛', '📄', '🔧'];
+/** Terskel = andel av MÅL. */
 const ANSIKT = [
   { terskel: 0, fjes: '😏', replikk: 'PAPIRSTOPP I SKUFF 2' },
-  { terskel: 10, fjes: '😐', replikk: 'Toner lav. Toner alltid lav.' },
-  { terskel: 22, fjes: '😟', replikk: 'Vent, vi kan snakke om dette' },
-  { terskel: 35, fjes: '😰', replikk: 'Jeg skal skrive ut! JEG LOVER!' },
-  { terskel: 48, fjes: '😵', replikk: 'Pcl-feil... 49.4c02...' },
-  { terskel: 60, fjes: '💀', replikk: '*siste pip*' },
+  { terskel: 0.15, fjes: '😐', replikk: 'Toner lav. Toner alltid lav.' },
+  { terskel: 0.35, fjes: '😟', replikk: 'Vent, vi kan snakke om dette' },
+  { terskel: 0.55, fjes: '😰', replikk: 'Jeg skal skrive ut! JEG LOVER!' },
+  { terskel: 0.8, fjes: '😵', replikk: 'Pcl-feil... 49.4c02...' },
+  { terskel: 1, fjes: '💀', replikk: '*siste pip*' },
 ];
 
 type Del = { id: number; emoji: string; x: number; y: number; dx: number; dy: number; rot: number };
@@ -65,8 +67,8 @@ export function KnusSkriveren({ onFerdig }: MiniSpillProps) {
     return () => window.removeEventListener('keydown', tast);
   }, [slå]);
 
-  const tilstand = [...ANSIKT].reverse().find((a) => slag >= a.terskel) ?? ANSIKT[0];
   const skade = Math.min(1, slag / MÅL);
+  const tilstand = [...ANSIKT].reverse().find((a) => skade >= a.terskel) ?? ANSIKT[0];
 
   return (
     <SpillRamme igjen={igjen} total={SEKUNDER} status={`Slag: ${slag} · Skade: ${Math.round(skade * 100)} %`}>

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Group, Progress, Text } from '@mantine/core';
+import classes from './SpillRamme.module.css';
 
 type Props = {
   igjen: number;
@@ -14,7 +15,7 @@ type Props = {
 export function SpillRamme({ igjen, total, status, visning, children }: Props) {
   const andel = (igjen / total) * 100;
   return (
-    <div>
+    <div className={classes.skjerm}>
       <Group justify="space-between" mb={6}>
         <Text fw={700} c="gray.3">
           {status}

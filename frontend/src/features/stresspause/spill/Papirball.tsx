@@ -12,8 +12,8 @@ const B = 720;
 const H = 400;
 const BAKKE = 370;
 const START = { x: 90, y: 300 };
-/** Ca. 3 sekunder per kast (sikte + flytid + pause) → tre kast rekker seg innen tida. */
-const KAST = 3;
+/** Ca. 3 sekunder per kast (sikte + flytid + pause) → fem kast rekker seg innen tida. */
+const KAST = 5;
 const GRAVITASJON = 0.35;
 const KRAFT = 0.16;
 const MAKS_DRA = 140;

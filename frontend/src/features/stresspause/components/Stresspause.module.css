@@ -4,6 +4,8 @@
     radial-gradient(circle at 15% 10%, rgba(94, 234, 212, 0.12), transparent 40%),
     radial-gradient(circle at 85% 90%, rgba(167, 139, 250, 0.15), transparent 45%),
     #1a1b2e;
+  /* Siden er alltid mørk, også når appen står i lyst tema. */
+  color: #e9ecef;
 }
 
 .kort {

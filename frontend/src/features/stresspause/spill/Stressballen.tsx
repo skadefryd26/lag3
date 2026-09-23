@@ -7,25 +7,28 @@ import type { MiniSpillProps } from '../types/stresspause.types';
 import classes from './spill.module.css';
 
 const SEKUNDER = SPILLTID_SEKUNDER;
-/** Faser i sekunder: klem, slipp, klem, slipp ... litt ujevnt så det ikke blir kjedelig. */
-const FASER = [2, 2, 1.5, 1.5, 1, 1, 1];
+/** Faser i sekunder: klem, slipp, klem, slipp ... jevn og rolig rytme. */
+const FASER = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
+/** Rett etter et bytte teller alt som riktig — ingen skal straffes for reaksjonstid. */
+const NÅDETID = 0.5;
 const REPLIKKER = {
   riktig: ['Mm. Ballen godkjenner.', 'Jevnt og fint.', 'Du puster nesten som en voksen.', 'Ballen er fornøyd.'],
   feil: ['Ballen er forvirret.', 'Det var ikke det vi avtalte.', 'Bjarne himler med øynene.'],
 };
 
-function fase(t: number): { klem: boolean; igjen: number; lengde: number } {
+function fase(t: number): { klem: boolean; igjen: number; lengde: number; inne: number } {
   let acc = 0;
   for (let i = 0; i < FASER.length; i++) {
-    if (t < acc + FASER[i]) return { klem: i % 2 === 0, igjen: acc + FASER[i] - t, lengde: FASER[i] };
+    if (t < acc + FASER[i])
+      return { klem: i % 2 === 0, igjen: acc + FASER[i] - t, lengde: FASER[i], inne: t - acc };
     acc += FASER[i];
   }
-  return { klem: false, igjen: 0, lengde: 1 };
+  return { klem: false, igjen: 0, lengde: 1, inne: 1 };
 }
 
-/** Å gjøre ingenting er «i takt» omtrent halve tida (alle SLIPP-fasene), så det trekkes fra. */
 function poengFraTakt(andel: number) {
-  return Math.max(0, (andel - 0.45) / 0.55);
+  // Å gjøre ingenting gir ~60 % (alle SLIPP-faser + nådetid), så det trekkes fra. Full pott fra 90 %.
+  return Math.min(1, Math.max(0, (andel - 0.6) / 0.3));
 }
 
 export function Stressballen({ onFerdig }: MiniSpillProps) {
@@ -48,7 +51,7 @@ export function Stressballen({ onFerdig }: MiniSpillProps) {
         if (nå > 0.1) lyd.pop();
       }
       treff.current.totalt += 1;
-      if (holderRef.current === f.klem) treff.current.riktig += 1;
+      if (holderRef.current === f.klem || f.inne < NÅDETID) treff.current.riktig += 1;
       setAndel(treff.current.riktig / treff.current.totalt);
       if (nå >= SEKUNDER) {
         clearInterval(id);

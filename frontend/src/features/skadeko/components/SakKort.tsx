@@ -47,7 +47,16 @@ export function SakKort({ sak, onApne }: Props) {
           {sak.beskrivelse}
         </Text>
       </Stack>
-      <Progress value={sak.igjen * 100} color={farge} size={6} radius="xl" mt="md" bg="gray.2" />
+      {/* Oppdateres hver frame: en CSS-overgang ville startet på nytt hele tiden og fått baren til å fryse. */}
+      <Progress
+        value={sak.igjen * 100}
+        color={farge}
+        size={6}
+        radius="xl"
+        mt="md"
+        bg="gray.2"
+        transitionDuration={0}
+      />
     </Box>
   );
 }

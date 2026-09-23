@@ -54,7 +54,7 @@ medarbeidersamtaleRouter.post<
 function valider(
   body: Partial<MedarbeidersamtaleRequest>,
 ): MedarbeidersamtaleRequest | null {
-  const { poeng, behandlet, tapt, tittel, tapteSaker, sekunderSpilt } = body;
+  const { poeng, behandlet, tapt, tittel, tapteSaker, sekunderSpilt, aarsak } = body;
 
   if (
     typeof poeng !== 'number' ||
@@ -73,6 +73,8 @@ function valider(
     tapt,
     sekunderSpilt,
     tittel: tittel.slice(0, 60),
+    // Valgfri for bakoverkompatibilitet; teksten kommer fra spillets egne data.
+    aarsak: typeof aarsak === 'string' ? aarsak.slice(0, 120) : 'Ukjent',
     // Kort liste, korte strenger — ingenting brukeren har skrevet selv havner her.
     tapteSaker: tapteSaker.filter((s): s is string => typeof s === 'string').slice(0, 20),
   };

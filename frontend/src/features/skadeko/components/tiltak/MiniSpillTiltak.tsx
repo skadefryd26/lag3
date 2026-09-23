@@ -11,16 +11,18 @@ type Oppsett = {
   /** Score 0–1 → prosentpoeng i spillerens favør. */
   effekt: (score: number) => number;
   dom: (score: number) => string;
+  /** Hopp rett inn i spillet, uten navn og instruks først. */
+  utenIntro?: boolean;
 };
 
 /**
  * Lager et tiltak av mini-spillene i `stresspause`: trekker et tilfeldig spill,
  * viser navn og instruks, og oversetter scoren til endring på måleren.
  */
-function lagTiltak({ utvalg, effekt, dom }: Oppsett): TiltakSpill {
+function lagTiltak({ utvalg, effekt, dom, utenIntro = false }: Oppsett): TiltakSpill {
   return function MiniSpillTiltak({ onFerdig }: TiltakSpillProps) {
     const [spill] = useState(() => utvalg[Math.floor(Math.random() * utvalg.length)]);
-    const [startet, setStartet] = useState(false);
+    const [startet, setStartet] = useState(utenIntro);
 
     useEffect(() => {
       if (startet) return;
@@ -70,4 +72,6 @@ export const KaffepauseTiltak = lagTiltak({
   utvalg: MINI_SPILL.filter((s) => s.anledning === 'kaffepause'),
   effekt: energiØkning,
   dom: bjarnesKaffedom,
+  // Alle vet hvordan man heller kaffe. Knappen i spillet sier resten.
+  utenIntro: true,
 });

@@ -18,12 +18,15 @@ export function useMaalere(aktiv: boolean) {
   const tommesRef = useRef<MaalerId[]>([]);
   tommesRef.current = tommes;
   const sist = useRef(0);
+  /** Sekunder spilt (uten pauser). Målerne drifter gradvis raskere utover dagen. */
+  const spilt = useRef(0);
   const frame = useRef(0);
 
   const nullstill = useCallback(() => {
     setMaalere({ ...STARTVERDIER });
     setTommes([]);
     sist.current = 0;
+    spilt.current = 0;
   }, []);
 
   /**
@@ -34,7 +37,11 @@ export function useMaalere(aktiv: boolean) {
     const konfig = MAALER_ETTER_ID[id];
     setMaalere((forrige) => {
       const retning = konfig.retning === 'tappes' ? 1 : -1;
-      const ny = forrige[id] + endring * retning;
+      let ny = forrige[id] + endring * retning;
+      // Tiltaket kan ikke løfte måleren over taket — men trekker den heller ikke ned.
+      if (konfig.tiltakTak !== undefined && konfig.retning === 'tappes') {
+        ny = Math.max(forrige[id], Math.min(konfig.tiltakTak, ny));
+      }
       return { ...forrige, [id]: klem(ny) };
     });
   }, []);
@@ -76,6 +83,9 @@ export function useMaalere(aktiv: boolean) {
       sist.current = na;
 
       if (sekunder > 0) {
+        spilt.current += sekunder;
+        // Dobbelt så rask drift etter 4 minutter, tre ganger etter 8.
+        const opptrapping = 1 + spilt.current / 240;
         setMaalere((forrige) => {
           const neste = { ...forrige };
           for (const konfig of MAALERE) {
@@ -83,7 +93,7 @@ export function useMaalere(aktiv: boolean) {
             // Under tømming går måleren i spillerens favør i stedet for å drifte.
             const fart = tommesRef.current.includes(konfig.id)
               ? -(konfig.tommingPerSekund ?? 0)
-              : konfig.driftPerSekund;
+              : konfig.driftPerSekund * opptrapping;
             neste[konfig.id] = klem(forrige[konfig.id] + fart * sekunder * retning);
           }
           return neste;

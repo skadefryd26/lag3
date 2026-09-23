@@ -12,7 +12,7 @@ import {
   Title,
 } from '@mantine/core';
 import { lyd } from '../lib/lyd';
-import { bjarnesDom, bjarnesKaffedom, energiØkning, stressReduksjon } from '../lib/stress';
+import { ENERGI_TAK, bjarnesDom, bjarnesKaffedom, energiØkning, stressReduksjon } from '../lib/stress';
 import { MINI_SPILL } from '../spill/register';
 import type { MiniSpill, Resultat } from '../types/stresspause.types';
 import classes from './Stresspause.module.css';
@@ -89,7 +89,7 @@ export function Stresspause() {
       lyd.ferdig();
       setSpiller(false);
       if (aktivt.anledning === 'kaffepause') {
-        const etter = Math.min(100, energi + energiØkning(score));
+        const etter = Math.max(energi, Math.min(ENERGI_TAK, energi + energiØkning(score)));
         setResultat({ spill: aktivt, score, maaler: 'energi', før: energi, etter });
         setEnergi(etter);
         return;
