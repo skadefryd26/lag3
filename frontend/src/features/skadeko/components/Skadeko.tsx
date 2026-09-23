@@ -1,4 +1,4 @@
-import { IconCircleFilled, IconClockPlay, IconCoffee, IconFlame, IconRobot } from '@tabler/icons-react';
+import { IconCircleFilled, IconClockPlay, IconFlame } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { Highscores, HighscoreInnmelding } from './Highscores';
@@ -103,11 +103,7 @@ export function Skadeko() {
           <Paper radius="lg" p="xl" shadow="sm" maw={600} mx="auto" bg="white">
             <Stack gap="md">
               <Stack gap="xs" align="center" ta="center">
-                <Group gap="sm" c="violet.6" aria-hidden>
-                  <IconCoffee size={44} stroke={1.5} />
-                  <IconRobot size={44} stroke={1.5} />
-                </Group>
-                <Title order={2}>Velkommen til Skadekø! 📞☕</Title>
+                <Title order={2}>Velkommen til Skadekø!</Title>
                 <Text c="dark.4">
                   Du er skadebehandler, og innboksen fylles raskere enn du rekker å svare. Din jobb
                   er å holde hodet kaldt.
