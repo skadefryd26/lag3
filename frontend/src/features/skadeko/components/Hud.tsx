@@ -7,13 +7,15 @@ import classes from './Skadeko.module.css';
 type Props = {
   poeng: number;
   maalere: Maalere;
+  /** Målere som tømmes akkurat nå — knappen deres er låst til de er i mål. */
+  tommes: MaalerId[];
   /** Åpner tiltaket for én måler. Null når spillet ikke er i gang. */
   onTiltak: ((id: MaalerId) => void) | null;
   menyApen: boolean;
   onMeny: () => void;
 };
 
-export function Hud({ poeng, maalere, onTiltak, menyApen, onMeny }: Props) {
+export function Hud({ poeng, maalere, tommes, onTiltak, menyApen, onMeny }: Props) {
   return (
     <Group justify="space-between" align="center" wrap="wrap" gap="md">
       <Group gap="sm" wrap="nowrap">
@@ -108,12 +110,12 @@ export function Hud({ poeng, maalere, onTiltak, menyApen, onMeny }: Props) {
                     variant={kritisk ? 'filled' : 'white'}
                     color={kritisk ? konfig.farge : undefined}
                     fullWidth
-                    disabled={!onTiltak}
+                    disabled={!onTiltak || tommes.includes(konfig.id)}
                     onClick={() => onTiltak?.(konfig.id)}
                     className={kritisk && grad > 0.85 ? classes.roper : undefined}
                     styles={{ label: { fontSize: 11, fontWeight: 700 } }}
                   >
-                    {konfig.knapp}
+                    {tommes.includes(konfig.id) ? (konfig.knappUnderveis ?? konfig.knapp) : konfig.knapp}
                   </Button>
                 </Tooltip>
               </Stack>
