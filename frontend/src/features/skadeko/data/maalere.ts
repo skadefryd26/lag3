@@ -64,7 +64,7 @@ export const MAALERE: MaalerKonfig[] = [
     emoji: '🚽',
     farge: 'yellow',
     retning: 'fylles',
-    driftPerSekund: 2.1,
+    driftPerSekund: 1.5,
     tommingPerSekund: 15,
     knapp: 'Gå på do',
     knappUnderveis: 'På do… 🚽',
