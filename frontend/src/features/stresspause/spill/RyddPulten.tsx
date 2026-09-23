@@ -33,7 +33,7 @@ const ROT: { emoji: string; navn: string; kurv: Kurv }[] = [
 
 const SEKUNDER = SPILLTID_SEKUNDER;
 /** Antall ting per runde — trekkes tilfeldig, men alltid med alle tre kurver representert. */
-const ANTALL = 8;
+const ANTALL = 6;
 
 type Ting = (typeof ROT)[number] & { id: number; x: number; y: number; rot: number };
 
@@ -53,8 +53,8 @@ export function RyddPulten({ onFerdig }: MiniSpillProps) {
         .map((t, i) => ({
           ...t,
           id: i,
-          x: 6 + (i % 4) * 23 + Math.random() * 4,
-          y: 4 + Math.floor(i / 4) * 34 + Math.random() * 8,
+          x: 10 + (i % 3) * 30 + Math.random() * 6,
+          y: 4 + Math.floor(i / 3) * 34 + Math.random() * 8,
           rot: Math.random() * 30 - 15,
         })),
     [],
