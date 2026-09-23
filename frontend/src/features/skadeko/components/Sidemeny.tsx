@@ -30,7 +30,7 @@ export function Sidemeny({ apen, onLukk, onNyDag, onVisHighscores }: Props) {
     >
       <Stack gap={4}>
         <NavLink label="Ny arbeidsdag" leftSection="☕" onClick={velg(onNyDag)} />
-        <NavLink label="Highscores" leftSection="🏆" onClick={velg(onVisHighscores)} />
+        <NavLink label="Poengtavle" leftSection="🏆" onClick={velg(onVisHighscores)} />
         <NavLink
           label="Spander kaffe på Bjarne"
           description="GoFundMe"
