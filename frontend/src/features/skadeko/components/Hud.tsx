@@ -1,4 +1,5 @@
 import { Box, Divider, Group, Progress, Stack, Text, Title } from '@mantine/core';
+import { MenyKnapp } from './Sidemeny';
 
 const FARGER = ['green', 'yellow', 'red'];
 
@@ -8,9 +9,11 @@ type Props = {
   liv: number;
   /** 0–1: hvor nær den mest utålmodige kunden er å gå. Fyller den aktive stolpen. */
   press: number;
+  menyApen: boolean;
+  onMeny: () => void;
 };
 
-export function Hud({ poeng, tapt, liv, press }: Props) {
+export function Hud({ poeng, tapt, liv, press, menyApen, onMeny }: Props) {
   const fyll = (i: number) => {
     const verdi = i < tapt ? 100 : i === tapt ? Math.max(0, Math.min(1, press)) * 100 : 0;
     // Energi (første stolpe) starter full og tappes; de andre fylles opp.
@@ -21,6 +24,7 @@ export function Hud({ poeng, tapt, liv, press }: Props) {
   return (
     <Group justify="space-between" align="center" wrap="wrap" gap="md">
       <Group gap="sm" wrap="nowrap">
+        <MenyKnapp apen={menyApen} onKlikk={onMeny} />
         <Box
           w={44}
           h={44}
