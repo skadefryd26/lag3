@@ -1,4 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
+import { Highscores, HighscoreInnmelding } from './Highscores';
+import { Sidemeny } from './Sidemeny';
+import { useHighscores } from '../hooks/useHighscores';
 import { Hud } from './Hud';
 import { Medarbeidersamtale } from './Medarbeidersamtale';
 import { SakDialog } from './SakDialog';
@@ -11,6 +15,14 @@ import classes from './Skadeko.module.css';
 export function Skadeko() {
   const spill = useSkadeko();
   const teams = useTeamsForstyrrelser(spill.tilstand === 'spiller');
+  const highscores = useHighscores();
+  const [visHighscores, setVisHighscores] = useState(false);
+  const [visMeny, setVisMeny] = useState(false);
+  // Holder innmeldingen synlig (med «du er på lista») etter at navnet er lagret.
+  const [lagretNa, setLagretNa] = useState(false);
+  useEffect(() => {
+    if (spill.tilstand === 'spiller') setLagretNa(false);
+  }, [spill.tilstand]);
 
   return (
     <Box mih="100vh" bg="dark.8">
@@ -36,6 +48,8 @@ export function Skadeko() {
                 ? 1 - Math.min(...spill.saker.map((s) => s.igjen))
                 : 0
             }
+            menyApen={visMeny}
+            onMeny={() => setVisMeny((v) => !v)}
           />
         </Container>
       </Box>
@@ -88,9 +102,43 @@ export function Skadeko() {
         )}
 
         {spill.tilstand === 'ferdig' && spill.resultat && (
-          <Medarbeidersamtale resultat={spill.resultat} onNyDag={spill.startDagen} />
+          <Medarbeidersamtale
+            resultat={spill.resultat}
+            onNyDag={spill.startDagen}
+            highscore={
+              highscores.kvalifiserer(spill.resultat.poeng) || lagretNa
+                ? (
+                    <HighscoreInnmelding
+                      key={spill.resultat.sekunderSpilt + '-' + spill.resultat.poeng}
+                      poeng={spill.resultat.poeng}
+                      onLagre={(navn) => {
+                        setLagretNa(true);
+                        highscores.leggTil(navn, spill.resultat!.poeng);
+                      }}
+                    />
+                  )
+                : null
+            }
+          />
         )}
       </Container>
+
+      <Highscores
+        apen={visHighscores}
+        onLukk={() => setVisHighscores(false)}
+        liste={highscores.liste}
+        nullstillesPa={highscores.nullstillesPa}
+      />
+
+      <Sidemeny
+        apen={visMeny}
+        onLukk={() => setVisMeny(false)}
+        onNyDag={spill.startDagen}
+        onVisHighscores={() => {
+          highscores.oppdater();
+          setVisHighscores(true);
+        }}
+      />
 
       <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
       <TeamsPopup meldinger={teams.meldinger} onLukk={teams.lukk} />
