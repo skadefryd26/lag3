@@ -1,12 +1,52 @@
+import { useCallback, useState } from 'react';
 import { Box, Button, Container, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { Hud } from './Hud';
 import { Medarbeidersamtale } from './Medarbeidersamtale';
 import { SakKort } from './SakKort';
+import { TiltakModal } from './tiltak/TiltakModal';
+import { useMaalere } from '../hooks/useMaalere';
 import { useSkadeko } from '../hooks/useSkadeko';
+import type { MaalerId, TiltakResultat } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
 
 export function Skadeko() {
   const spill = useSkadeko();
+  const [aktivtTiltak, setAktivtTiltak] = useState<MaalerId | null>(null);
+
+  // Målerne drifter bare mens du faktisk sitter på skrivebordet.
+  const { maalere, paavirk, nullstill } = useMaalere(
+    spill.tilstand === 'spiller' && !spill.pauset,
+  );
+  const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
+
+  const apneTiltak = useCallback(
+    (id: MaalerId) => {
+      spill.pause();
+      setAktivtTiltak(id);
+    },
+    [spill],
+  );
+
+  const lukkTiltak = useCallback(() => {
+    setAktivtTiltak(null);
+    spill.fortsett();
+  }, [spill]);
+
+  const fullfoerTiltak = useCallback(
+    (id: MaalerId, resultat: TiltakResultat) => {
+      paavirk(id, resultat.endring);
+      setTiltakskvittering(resultat.melding ?? null);
+      lukkTiltak();
+    },
+    [paavirk, lukkTiltak],
+  );
+
+  const nyDag = useCallback(() => {
+    setAktivtTiltak(null);
+    setTiltakskvittering(null);
+    nullstill();
+    spill.startDagen();
+  }, [nullstill, spill]);
 
   return (
     <Box mih="100vh" bg="dark.8">
@@ -25,13 +65,8 @@ export function Skadeko() {
         <Container size="lg" px={0}>
           <Hud
             poeng={spill.poeng}
-            tapt={spill.tapt}
-            liv={spill.liv}
-            press={
-              spill.tilstand === 'spiller' && spill.saker.length > 0
-                ? 1 - Math.min(...spill.saker.map((s) => s.igjen))
-                : 0
-            }
+            maalere={maalere}
+            onTiltak={spill.tilstand === 'spiller' ? apneTiltak : null}
           />
         </Container>
       </Box>
@@ -49,7 +84,12 @@ export function Skadeko() {
                 Mister du tre kunder, er du offisielt <b>sykmeldt</b> — og da kaller Bjarne deg
                 inn til medarbeidersamtale.
               </Text>
-              <Button size="lg" color="teal" onClick={spill.startDagen}>
+              <Text c="dimmed" fz="sm">
+                Samtidig tappes <b>energien</b>, <b>blæra</b> fylles og <b>stresset</b> stiger.
+                Knappene under stolpene øverst tar deg vekk fra skrivebordet — men køen står
+                stille mens du er borte.
+              </Text>
+              <Button size="lg" color="teal" onClick={nyDag}>
                 Stemple inn ☕
               </Button>
             </Stack>
@@ -69,11 +109,32 @@ export function Skadeko() {
         )}
 
         {spill.tilstand === 'ferdig' && spill.resultat && (
-          <Medarbeidersamtale resultat={spill.resultat} onNyDag={spill.startDagen} />
+          <Medarbeidersamtale resultat={spill.resultat} onNyDag={nyDag} />
         )}
       </Container>
 
-      {spill.tilstand === 'spiller' && spill.tapsmelding && (
+      <TiltakModal
+        aktiv={aktivtTiltak}
+        verdi={aktivtTiltak ? maalere[aktivtTiltak] : 0}
+        onFerdig={fullfoerTiltak}
+        onLukk={lukkTiltak}
+      />
+
+      {spill.tilstand === 'spiller' && tiltakskvittering && (
+        <Notification
+          key={tiltakskvittering}
+          color="teal"
+          onClose={() => setTiltakskvittering(null)}
+          pos="fixed"
+          bottom={24}
+          left="50%"
+          style={{ transform: 'translateX(-50%)', zIndex: 5 }}
+        >
+          {tiltakskvittering}
+        </Notification>
+      )}
+
+      {spill.tilstand === 'spiller' && spill.tapsmelding && !tiltakskvittering && (
         <Notification
           key={spill.tapsmelding + spill.tapt}
           color="red"

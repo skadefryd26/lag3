@@ -27,6 +27,7 @@ const sakensVarighet = (antallSpawnet: number) =>
  */
 export function useSkadeko() {
   const [tilstand, setTilstand] = useState<Spilltilstand>('ikke-startet');
+  const [pauset, setPauset] = useState(false);
   const [saker, setSaker] = useState<Sak[]>([]);
   const [poeng, setPoeng] = useState(0);
   const [behandlet, setBehandlet] = useState(0);
@@ -50,7 +51,9 @@ export function useSkadeko() {
 
   const avsluttDagen = useCallback(() => {
     kjorer.current = false;
+    pausetPa.current = 0;
     cancelAnimationFrame(frame.current);
+    setPauset(false);
     const sekunder = Math.round((performance.now() - startetPa.current) / 1000);
     setResultat({
       poeng: poengRef.current,
@@ -123,7 +126,7 @@ export function useSkadeko() {
   );
 
   const behandleSak = useCallback((id: number) => {
-    if (!kjorer.current) return;
+    if (!kjorer.current || pausetPa.current !== 0) return;
     if (!sakerRef.current.some((s) => s.id === id)) return;
 
     sakerRef.current = sakerRef.current.filter((s) => s.id !== id);
@@ -150,6 +153,7 @@ export function useSkadeko() {
     setTapt(0);
     setTapsmelding(null);
     setResultat(null);
+    setPauset(false);
     setTilstand('spiller');
 
     const na = performance.now();
@@ -159,28 +163,45 @@ export function useSkadeko() {
     frame.current = requestAnimationFrame(tick);
   }, [tick]);
 
+  /**
+   * Fryser skadekøen. Brukes når spilleren åpner et tiltak — fristene står
+   * stille så lenge hen er borte fra skrivebordet.
+   */
+  const pause = useCallback(() => {
+    if (!kjorer.current || pausetPa.current !== 0) return;
+    pausetPa.current = performance.now();
+    cancelAnimationFrame(frame.current);
+    setPauset(true);
+  }, []);
+
+  /** Starter køen igjen og skyver alle frister like langt fram som pausen varte. */
+  const fortsett = useCallback(() => {
+    if (!kjorer.current || pausetPa.current === 0) return;
+    const borte = performance.now() - pausetPa.current;
+    pausetPa.current = 0;
+    sakerRef.current = sakerRef.current.map((s) => ({ ...s, frist: s.frist + borte }));
+    setSaker(sakerRef.current);
+    nesteSpawn.current += borte;
+    setPauset(false);
+    frame.current = requestAnimationFrame(tick);
+  }, [tick]);
+
   // Pause nedtellingen når fanen ikke er synlig.
   useEffect(() => {
     const vedBytte = () => {
       if (!kjorer.current) return;
-      if (document.hidden) {
-        pausetPa.current = performance.now();
-        cancelAnimationFrame(frame.current);
-      } else {
-        const borte = performance.now() - pausetPa.current;
-        sakerRef.current = sakerRef.current.map((s) => ({ ...s, frist: s.frist + borte }));
-        nesteSpawn.current += borte;
-        frame.current = requestAnimationFrame(tick);
-      }
+      if (document.hidden) pause();
+      else fortsett();
     };
     document.addEventListener('visibilitychange', vedBytte);
     return () => document.removeEventListener('visibilitychange', vedBytte);
-  }, [tick]);
+  }, [pause, fortsett]);
 
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
   return {
     tilstand,
+    pauset,
     saker,
     poeng,
     behandlet,
@@ -189,6 +210,8 @@ export function useSkadeko() {
     resultat,
     startDagen,
     behandleSak,
+    pause,
+    fortsett,
     liv: LIV,
   };
 }
