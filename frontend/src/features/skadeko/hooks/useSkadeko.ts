@@ -9,6 +9,7 @@ import type {
 } from '../types/skadeko.types';
 
 const MAKS_SAKER_PA_SKRIVEBORDET = 8;
+/** Liv per dag. Du mister ett når en kunde går lei, og ett for hvert feil svar. */
 const LIV = 3;
 
 /** Poeng du mister for feil svar. */
@@ -19,22 +20,28 @@ const TIDSBONUS_ANDEL = 0.5;
 const COMBO_PER_STEG = 5;
 
 /*
- * Vanskelighetsgraden øker jevnt og uten tak — dagen tar slutt fordi du til
- * slutt ikke henger med, ikke fordi en klokke sier det. Myke kurver, ingen
- * plutselige hopp:
+ * Vanskelighetsgraden følger aktiv spilletid (pauser teller ikke) og øker
+ * jevnt uten tak — dagen tar slutt fordi du til slutt ikke henger med.
+ * Level 10 nås etter 2 minutter; etter det blir det fortsatt verre.
  *
- *   sak nr.         0     10     20     40     60
- *   ny sak hvert   12 s  7,5 s  5,5 s  3,5 s  2,6 s
- *   tid per sak    45 s   32 s   25 s   17 s   13 s  (× kategoriens tålmodighet)
+ *   aktiv tid        0 s    30 s   60 s   90 s   120 s  (level 10)
+ *   ny sak hvert    12 s   6,6 s  4,4 s  3,4 s  2,7 s
+ *   tid per sak     45 s    28 s   20 s   16 s   13 s  (× kategoriens tålmodighet)
  */
-const spawnIntervall = (antallSpawnet: number) =>
-  Math.max(1200, 12000 / (1 + antallSpawnet * 0.06));
-
-/** Saker per level. Level 10 er nådd etter 54 saker — vanskeligheten øker likevel videre. */
-const SAKER_PER_LEVEL = 6;
 export const MAKS_LEVEL = 10;
-const levelFor = (antallSpawnet: number) =>
-  Math.min(MAKS_LEVEL, 1 + Math.floor(antallSpawnet / SAKER_PER_LEVEL));
+const TID_TIL_MAKS_LEVEL_MS = 2 * 60 * 1000;
+
+/** 0 ved start, 1 ved level 10, og videre oppover. */
+const framdrift = (aktivMs: number) => aktivMs / TID_TIL_MAKS_LEVEL_MS;
+
+const spawnIntervall = (aktivMs: number) =>
+  Math.max(1200, 12000 / (1 + 3.5 * framdrift(aktivMs)));
+
+const grunnVarighet = (aktivMs: number) =>
+  Math.max(6000, 45000 / (1 + 2.4 * framdrift(aktivMs)));
+
+const levelFor = (aktivMs: number) =>
+  Math.min(MAKS_LEVEL, 1 + Math.floor(framdrift(aktivMs) * (MAKS_LEVEL - 1)));
 
 /** Demo/testing: `?level=10` i adressen starter dagen på det levelet. */
 function startLevelFraAdressen(): number {
@@ -42,8 +49,12 @@ function startLevelFraAdressen(): number {
   return Number.isInteger(tall) && tall >= 1 && tall <= MAKS_LEVEL ? tall : 1;
 }
 
-const grunnVarighet = (antallSpawnet: number) =>
-  Math.max(6000, 45000 / (1 + antallSpawnet * 0.04));
+function tomForLivTekst(tapt: number, feil: number): string {
+  const deler = [];
+  if (tapt > 0) deler.push(`${tapt} ${tapt === 1 ? 'kunde gikk' : 'kunder gikk'} lei`);
+  if (feil > 0) deler.push(`${feil} feil svar`);
+  return `Tom for liv: ${deler.join(' og ')}.`;
+}
 
 function bland<T>(liste: T[]): T[] {
   const kopi = [...liste];
@@ -65,6 +76,7 @@ export function useSkadeko() {
   const [poeng, setPoeng] = useState(0);
   const [behandlet, setBehandlet] = useState(0);
   const [tapt, setTapt] = useState(0);
+  const [feil, setFeil] = useState(0);
   const [combo, setCombo] = useState(0);
   const [level, setLevel] = useState(1);
   const [tapsmelding, setTapsmelding] = useState<string | null>(null);
@@ -83,9 +95,16 @@ export function useSkadeko() {
   const poengRef = useRef(0);
   const behandletRef = useRef(0);
   const taptRef = useRef(0);
+  const feilRef = useRef(0);
   const comboRef = useRef(0);
   const tapteSaker = useRef<string[]>([]);
   const kjorer = useRef(false);
+  /** Samlet pausetid, så vanskeligheten bare følger tida du faktisk spiller. */
+  const pauseTotal = useRef(0);
+  /** Forsprang fra `?level=`, i ms aktiv tid. */
+  const forsprang = useRef(0);
+  const levelRef = useRef(1);
+  const aktivTid = (na: number) => na - startetPa.current - pauseTotal.current + forsprang.current;
 
   const avsluttDagen = useCallback((aarsak: string) => {
     kjorer.current = false;
@@ -114,9 +133,8 @@ export function useSkadeko() {
 
     const riktigTekst = mal.svar[mal.riktig];
     const svar = bland(mal.svar);
-    const varighet = grunnVarighet(spawnet.current) * KATEGORIER[mal.kategori].talmodighet;
+    const varighet = grunnVarighet(aktivTid(na)) * KATEGORIER[mal.kategori].talmodighet;
     spawnet.current += 1;
-    setLevel(levelFor(spawnet.current));
 
     return {
       ...mal,
@@ -132,6 +150,12 @@ export function useSkadeko() {
   const tick = useCallback(
     (na: number) => {
       if (!kjorer.current) return;
+
+      const nyttLevel = levelFor(aktivTid(na));
+      if (nyttLevel !== levelRef.current) {
+        levelRef.current = nyttLevel;
+        setLevel(nyttLevel);
+      }
 
       const overlevende: Sak[] = [];
       let mistet = 0;
@@ -151,9 +175,9 @@ export function useSkadeko() {
       if (na >= nesteSpawn.current && overlevende.length < MAKS_SAKER_PA_SKRIVEBORDET) {
         sakerRef.current = overlevende;
         overlevende.push(lagSak(na));
-        nesteSpawn.current = na + spawnIntervall(spawnet.current);
+        nesteSpawn.current = na + spawnIntervall(aktivTid(na));
       } else if (na >= nesteSpawn.current) {
-        nesteSpawn.current = na + spawnIntervall(spawnet.current);
+        nesteSpawn.current = na + spawnIntervall(aktivTid(na));
       }
 
       sakerRef.current = overlevende;
@@ -165,8 +189,8 @@ export function useSkadeko() {
         setCombo(0);
         setTapt(taptRef.current);
         setTapsmelding(sisteTap);
-        if (taptRef.current >= LIV) {
-          avsluttDagen(`${LIV} kunder gikk lei før du rakk å svare.`);
+        if (taptRef.current + feilRef.current >= LIV) {
+          avsluttDagen(tomForLivTekst(taptRef.current, feilRef.current));
           return;
         }
       }
@@ -228,36 +252,47 @@ export function useSkadeko() {
       tapteSaker.current.push(
         `Feil svar: ${sak.beskrivelse} (${sak.kunde}) — svarte «${sak.svar[valg]}»`,
       );
+      feilRef.current += 1;
+      setFeil(feilRef.current);
       setTilbakemelding({
         id: Date.now(),
         riktig: false,
         poeng: -TREKK_FEIL_SVAR,
-        tekst: `Feil! −${TREKK_FEIL_SVAR}. Riktig svar var: ${sak.svar[sak.riktig]}`,
+        tekst: `Feil! −${TREKK_FEIL_SVAR} og −1 liv. Riktig svar var: ${sak.svar[sak.riktig]}`,
       });
+      if (taptRef.current + feilRef.current >= LIV) {
+        avsluttDagen(tomForLivTekst(taptRef.current, feilRef.current));
+        return;
+      }
     }
 
     setCombo(comboRef.current);
     setBehandlet(behandletRef.current);
     setPoeng(poengRef.current);
-  }, []);
+  }, [avsluttDagen]);
 
   const startDagen = useCallback(() => {
     cancelAnimationFrame(frame.current);
     sakerRef.current = [];
     tapteSaker.current = [];
     nesteId.current = 0;
+    spawnet.current = 0;
     const startLevel = startLevelFraAdressen();
-    spawnet.current = (startLevel - 1) * SAKER_PER_LEVEL;
+    forsprang.current = ((startLevel - 1) / (MAKS_LEVEL - 1)) * TID_TIL_MAKS_LEVEL_MS;
+    pauseTotal.current = 0;
+    levelRef.current = startLevel;
     setLevel(startLevel);
     poengRef.current = 0;
     behandletRef.current = 0;
     taptRef.current = 0;
+    feilRef.current = 0;
     comboRef.current = 0;
 
     setSaker([]);
     setPoeng(0);
     setBehandlet(0);
     setTapt(0);
+    setFeil(0);
     setCombo(0);
     setTapsmelding(null);
     setTilbakemelding(null);
@@ -293,6 +328,7 @@ export function useSkadeko() {
     sakerRef.current = sakerRef.current.map((s) => ({ ...s, frist: s.frist + borte }));
     setSaker(sakerRef.current);
     nesteSpawn.current += borte;
+    pauseTotal.current += borte;
     setPauset(false);
     frame.current = requestAnimationFrame(tick);
   }, [tick]);
@@ -334,5 +370,6 @@ export function useSkadeko() {
     pause,
     fortsett,
     liv: LIV,
+    livIgjen: Math.max(0, LIV - tapt - feil),
   };
 }
