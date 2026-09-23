@@ -8,8 +8,9 @@ import { useNedtelling } from '../lib/useNedtelling';
 import type { MiniSpillProps } from '../types/stresspause.types';
 import classes from './spill.module.css';
 
-const BREDDE = 10;
-const HØYDE = 16;
+/** Smalt arkiv: seks kolonner gjør det mye lettere å fylle hele rader. */
+const BREDDE = 6;
+const HØYDE = 14;
 const SEKUNDER = SPILLTID_SEKUNDER;
 /** Full effekt: f.eks. én linje + 15 brikker, eller to linjer + 5 brikker. Brikker teller, så ingen går tomhendt. */
 const MÅL = 2.5;
@@ -209,7 +210,7 @@ export function ArkivTetris({ onFerdig }: MiniSpillProps) {
       status={`Arkiverte linjer: ${s.linjer} · Effekt: ${Math.min(100, Math.round(score(s) * 100))} %`}
     >
       <div className={classes.tetrisRad}>
-        <div className={classes.tetrisBrett} style={{ gridTemplateColumns: `repeat(${BREDDE}, 1fr)` }}>
+        <div className={classes.tetrisBrett} style={{ gridTemplateColumns: `repeat(${BREDDE}, 1fr)`, width: `min(${BREDDE * 30}px, 70vw)` }}>
           {visning.flat().map((c, i) => (
             <div
               key={i}
