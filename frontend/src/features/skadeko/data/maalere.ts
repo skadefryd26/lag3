@@ -65,7 +65,7 @@ export const MAALERE: MaalerKonfig[] = [
     farge: 'yellow',
     retning: 'fylles',
     driftPerSekund: 1.5,
-    tommingPerSekund: 15,
+    tommingPerSekund: 30,
     knapp: 'Gå på do',
     knappUnderveis: 'På do… 🚽',
     tiltakTittel: 'Turen til toalettet',

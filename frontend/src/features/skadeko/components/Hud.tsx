@@ -10,6 +10,8 @@ type Props = {
   poeng: number;
   /** Vanskelighetsgrad 1–10. */
   level: number;
+  liv: number;
+  livIgjen: number;
   maalere: Maalere;
   /** Målere som tømmes akkurat nå — knappen deres er låst til de er i mål. */
   tommes: MaalerId[];
@@ -26,7 +28,7 @@ function levelFarge(level: number) {
   return 'white';
 }
 
-export function Hud({ visStatus, poeng, level, maalere, tommes, onTiltak, menyApen, onMeny }: Props) {
+export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, onTiltak, menyApen, onMeny }: Props) {
   return (
     <Group justify="space-between" align="center" wrap="wrap" gap="md">
       <Group gap="sm" wrap="nowrap">
@@ -86,6 +88,20 @@ export function Hud({ visStatus, poeng, level, maalere, tommes, onTiltak, menyAp
             </Text>
             <Text fz={13} c="rgba(255,255,255,0.75)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
               level
+            </Text>
+          </Stack>
+
+          <Stack gap={2} align="center" miw={70} aria-label={`${livIgjen} av ${liv} liv igjen`}>
+            <Group gap={2} wrap="nowrap" lh={1} fz={26}>
+              {Array.from({ length: liv }, (_, i) => (
+                // key med livIgjen: hjertet som nettopp ble mistet, animeres.
+                <span key={`${i}-${i < livIgjen}`} className={i < livIgjen ? undefined : classes.mistetLiv}>
+                  {i < livIgjen ? '❤️' : '🖤'}
+                </span>
+              ))}
+            </Group>
+            <Text fz={13} c="rgba(255,255,255,0.75)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
+              liv
             </Text>
           </Stack>
 

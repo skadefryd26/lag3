@@ -110,6 +110,8 @@ export function Skadeko() {
             visStatus={spill.tilstand !== 'ikke-startet'}
             poeng={spill.poeng}
             level={spill.level}
+            liv={spill.liv}
+            livIgjen={spill.livIgjen}
             maalere={maalere}
             tommes={tommes}
             onTiltak={spill.tilstand === 'spiller' ? apneTiltak : null}
