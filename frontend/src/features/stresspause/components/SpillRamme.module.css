@@ -1,0 +1,8 @@
+/* Mini-spillene er tegnet for mørk bakgrunn. Rammen er deres egen «skjerm»,
+   så de ser like ut uansett om appen står i lyst eller mørkt tema. */
+.skjerm {
+  background: #25263f;
+  color: #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+}

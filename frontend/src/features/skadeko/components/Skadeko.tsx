@@ -11,7 +11,7 @@ import { SakKort } from './SakKort';
 import { TeamsPopup } from './TeamsPopup';
 import { TiltakModal } from './tiltak/TiltakModal';
 import { TommingModal } from './tiltak/TommingModal';
-import { MAALER_ETTER_ID } from '../data/maalere';
+import { MAALERE, MAALER_ETTER_ID, iKrise } from '../data/maalere';
 import { useMaalere } from '../hooks/useMaalere';
 import { useSkadeko } from '../hooks/useSkadeko';
 import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
@@ -30,6 +30,13 @@ export function Skadeko() {
   const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
 
   const { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming } = useMaalere(vedSkrivebordet);
+
+  // En måler i krise (energi 0 %, blære eller stress 100 %) avslutter dagen.
+  const { tapDagen } = spill;
+  const krise = spill.tilstand === 'spiller' ? MAALERE.find((m) => iKrise(m, maalere[m.id])) : undefined;
+  useEffect(() => {
+    if (krise) tapDagen(krise.krisetekst);
+  }, [krise, tapDagen]);
 
   // Holder innmeldingen synlig (med «du er på lista») etter at navnet er lagret.
   const [lagretNa, setLagretNa] = useState(false);

@@ -42,6 +42,7 @@ export function SakDialog({ sak, onSvar, onLukk }: Props) {
             color={sak.igjen < 0.3 ? 'red' : sak.igjen < 0.6 ? 'yellow' : 'teal'}
             size="sm"
             radius="xl"
+            transitionDuration={0}
             aria-label="Kundens tålmodighet"
           />
           <Text fz="lg" fs="italic">

@@ -1,17 +1,22 @@
-/** Ingen mini-spill skal ta mer enn dette. */
-export const SPILLTID_SEKUNDER = 10;
+/** Ingen mini-spill skal ta mer enn dette. Skadekøen står stille imens. */
+export const SPILLTID_SEKUNDER = 15;
 
-/** Man kan ikke tape: selv 0 % gir litt ro. Full pott gir mye. */
+/** Man kan ikke tape: selv 0 % gir litt effekt. Full pott gir mye. */
 export const MINSTE_EFFEKT = 5;
-export const MAKS_BONUS = 45;
+
+/** En stresspause tar alltid bort minst 50 poeng stress, og opptil 80 ved perfekt spill. */
+export const MINSTE_STRESSREDUKSJON = 50;
+export const MAKS_STRESSREDUKSJON = 80;
 
 export function stressReduksjon(score: number): number {
   const s = Math.max(0, Math.min(1, score));
-  return Math.round(MINSTE_EFFEKT + s * MAKS_BONUS);
+  return Math.round(MINSTE_STRESSREDUKSJON + s * (MAKS_STRESSREDUKSJON - MINSTE_STRESSREDUKSJON));
 }
 
 /** Kaffepausen gir energi: 5 for å prøve, opptil 80 for perfekt helling. */
 export const MAKS_ENERGI = 80;
+/** Kaffe løfter energien til høyst dette. Helt uthvilt blir du ikke av kaffe. */
+export const ENERGI_TAK = 90;
 
 export function energiØkning(score: number): number {
   const s = Math.max(0, Math.min(1, score));

@@ -40,6 +40,10 @@ export function Medarbeidersamtale({ resultat, onNyDag, highscore }: Props) {
           </Stack>
         </Group>
 
+        <Text fw={700} c="red.7">
+          {resultat.aarsak}
+        </Text>
+
         <Group gap="xl" wrap="wrap">
           <Nokkeltall etikett="Behandlet" verdi={`${resultat.behandlet} saker`} />
           <Nokkeltall etikett="Poeng" verdi={String(resultat.poeng)} />
