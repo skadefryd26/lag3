@@ -1,4 +1,5 @@
 import { Alert, Blockquote, Button, Group, Paper, Stack, Text } from '@mantine/core';
+import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hentMedarbeidersamtale } from '../api/medarbeidersamtale.api';
 import type { Dagsresultat } from '../types/skadeko.types';
@@ -7,10 +8,12 @@ import classes from './Skadeko.module.css';
 type Props = {
   resultat: Dagsresultat;
   onNyDag: () => void;
+  /** Navne-innmelding til highscore-lista, når poengsummen er god nok. */
+  highscore?: ReactNode;
 };
 
 /** Bjarne leser dagsrapporten og er uimponert. Ett kall til AI-gatewayen. */
-export function Medarbeidersamtale({ resultat, onNyDag }: Props) {
+export function Medarbeidersamtale({ resultat, onNyDag, highscore }: Props) {
   const { data, error, isPending, isError, refetch, isFetching } = useQuery({
     // Ny arbeidsdag = ny samtale. Tallene er nøkkelen.
     queryKey: ['medarbeidersamtale', resultat],
@@ -57,6 +60,8 @@ export function Medarbeidersamtale({ resultat, onNyDag }: Props) {
             <Text className={classes.samtale}>{data}</Text>
           </Blockquote>
         )}
+
+        {highscore}
 
         <Group>
           <Button size="md" onClick={onNyDag} color="teal">

@@ -1,26 +1,23 @@
-import { Box, Divider, Group, Progress, Stack, Text, Title } from '@mantine/core';
-
-const FARGER = ['green', 'yellow', 'red'];
+import { Box, Button, Divider, Group, Progress, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { MenyKnapp } from './Sidemeny';
+import { MAALERE, alvorlighet, erKritisk } from '../data/maalere';
+import type { MaalerId, Maalere } from '../types/skadeko.types';
+import classes from './Skadeko.module.css';
 
 type Props = {
   poeng: number;
-  tapt: number;
-  liv: number;
-  /** 0–1: hvor nær den mest utålmodige kunden er å gå. Fyller den aktive stolpen. */
-  press: number;
+  maalere: Maalere;
+  /** Åpner tiltaket for én måler. Null når spillet ikke er i gang. */
+  onTiltak: ((id: MaalerId) => void) | null;
+  menyApen: boolean;
+  onMeny: () => void;
 };
 
-export function Hud({ poeng, tapt, liv, press }: Props) {
-  const fyll = (i: number) => {
-    const verdi = i < tapt ? 100 : i === tapt ? Math.max(0, Math.min(1, press)) * 100 : 0;
-    // Energi (første stolpe) starter full og tappes; de andre fylles opp.
-    return i === 0 ? 100 - verdi : verdi;
-  };
-  const merkelapper = ['🔋 Energi', '🚽 Blære', '🤯 Stress'].slice(0, liv);
-
+export function Hud({ poeng, maalere, onTiltak, menyApen, onMeny }: Props) {
   return (
     <Group justify="space-between" align="center" wrap="wrap" gap="md">
       <Group gap="sm" wrap="nowrap">
+        <MenyKnapp apen={menyApen} onKlikk={onMeny} />
         <Box
           w={44}
           h={44}
@@ -48,7 +45,7 @@ export function Hud({ poeng, tapt, liv, press }: Props) {
 
       <Group
         gap="lg"
-        align="center"
+        align="flex-start"
         wrap="nowrap"
         px="md"
         py={8}
@@ -59,7 +56,7 @@ export function Hud({ poeng, tapt, liv, press }: Props) {
           backdropFilter: 'blur(6px)',
         }}
       >
-        <Stack gap={0} align="center">
+        <Stack gap={0} align="center" pt={6}>
           <Text fz={22} fw={900} c="white" lh={1}>
             {poeng}
           </Text>
@@ -70,34 +67,58 @@ export function Hud({ poeng, tapt, liv, press }: Props) {
 
         <Divider orientation="vertical" color="rgba(255,255,255,0.2)" />
 
-        <Group gap="md" wrap="nowrap" aria-label="Utmattelse">
-          {merkelapper.map((tekst, i) => (
-            <Stack key={tekst} gap={4} w={96}>
-              <Text
-                fz={11}
-                fw={700}
-                c={i === tapt ? 'white' : 'rgba(255,255,255,0.7)'}
-              >
-                {tekst}{' '}
-                <span
-                  aria-label={i === 0 ? 'synker' : 'stiger'}
-                  style={{ color: '#ff6b6b', fontWeight: 900 }}
+        <Group gap="md" wrap="nowrap" align="flex-start" aria-label="Din tilstand">
+          {MAALERE.map((konfig) => {
+            const verdi = maalere[konfig.id];
+            const kritisk = erKritisk(konfig, verdi);
+            const grad = alvorlighet(konfig, verdi);
+
+            return (
+              <Stack key={konfig.id} gap={5} w={112}>
+                <Group gap={4} wrap="nowrap" justify="space-between">
+                  <Text fz={11} fw={700} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.8)'}>
+                    {konfig.emoji} {konfig.navn}
+                  </Text>
+                  <Text fz={11} fw={800} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.55)'}>
+                    {Math.round(verdi)}%
+                  </Text>
+                </Group>
+
+                <Progress
+                  size={10}
+                  radius="xl"
+                  bg="rgba(255,255,255,0.18)"
+                  value={verdi}
+                  color={konfig.farge}
+                  animated={kritisk}
+                  striped={kritisk}
+                  transitionDuration={200}
+                  aria-label={`${konfig.navn}: ${Math.round(verdi)} prosent`}
+                />
+
+                <Tooltip
+                  label={konfig.tiltakBeskrivelse}
+                  withArrow
+                  openDelay={400}
+                  multiline
+                  w={230}
                 >
-                  {i === 0 ? '▼' : '▲'}
-                </span>
-              </Text>
-              <Progress
-                size={10}
-                radius="xl"
-                bg="rgba(255,255,255,0.18)"
-                value={fyll(i)}
-                color={FARGER[i] ?? 'red'}
-                animated={i === tapt && press > 0.75}
-                striped={i === tapt && press > 0.75}
-                transitionDuration={120}
-              />
-            </Stack>
-          ))}
+                  <Button
+                    size="compact-xs"
+                    variant={kritisk ? 'filled' : 'white'}
+                    color={kritisk ? konfig.farge : undefined}
+                    fullWidth
+                    disabled={!onTiltak}
+                    onClick={() => onTiltak?.(konfig.id)}
+                    className={kritisk && grad > 0.85 ? classes.roper : undefined}
+                    styles={{ label: { fontSize: 11, fontWeight: 700 } }}
+                  >
+                    {konfig.knapp}
+                  </Button>
+                </Tooltip>
+              </Stack>
+            );
+          })}
         </Group>
       </Group>
     </Group>

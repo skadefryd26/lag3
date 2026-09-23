@@ -37,6 +37,21 @@ export type Tilbakemelding = {
 
 export type Spilltilstand = 'ikke-startet' | 'spiller' | 'ferdig';
 
+/** De tre målerne skadebehandleren må holde i sjakk. */
+export type MaalerId = 'energi' | 'blaere' | 'stress';
+
+/** Verdien på hver måler, 0–100. Se `data/maalere.ts` for hva 0 og 100 betyr. */
+export type Maalere = Record<MaalerId, number>;
+
+/**
+ * Det et ferdigspilt minispill leverer tilbake.
+ * `endring` er prosentpoeng i retning «bra» for den måleren.
+ */
+export type TiltakResultat = {
+  endring: number;
+  melding?: string;
+};
+
 /** Alt Bjarne får vite om arbeidsdagen din. */
 export type Dagsresultat = {
   poeng: number;
