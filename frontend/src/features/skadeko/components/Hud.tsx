@@ -1,4 +1,5 @@
 import { Box, Button, Divider, Group, Progress, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { MenyKnapp } from './Sidemeny';
 import { MAALERE, alvorlighet, erKritisk } from '../data/maalere';
 import type { MaalerId, Maalere } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
@@ -8,12 +9,15 @@ type Props = {
   maalere: Maalere;
   /** Åpner tiltaket for én måler. Null når spillet ikke er i gang. */
   onTiltak: ((id: MaalerId) => void) | null;
+  menyApen: boolean;
+  onMeny: () => void;
 };
 
-export function Hud({ poeng, maalere, onTiltak }: Props) {
+export function Hud({ poeng, maalere, onTiltak, menyApen, onMeny }: Props) {
   return (
     <Group justify="space-between" align="center" wrap="wrap" gap="md">
       <Group gap="sm" wrap="nowrap">
+        <MenyKnapp apen={menyApen} onKlikk={onMeny} />
         <Box
           w={44}
           h={44}

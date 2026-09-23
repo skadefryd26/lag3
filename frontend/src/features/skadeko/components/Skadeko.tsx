@@ -1,24 +1,38 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
+import { Highscores, HighscoreInnmelding } from './Highscores';
+import { Sidemeny } from './Sidemeny';
+import { useHighscores } from '../hooks/useHighscores';
 import { Hud } from './Hud';
 import { Medarbeidersamtale } from './Medarbeidersamtale';
 import { SakDialog } from './SakDialog';
 import { SakKort } from './SakKort';
+import { TeamsPopup } from './TeamsPopup';
 import { TiltakModal } from './tiltak/TiltakModal';
 import { useMaalere } from '../hooks/useMaalere';
 import { useSkadeko } from '../hooks/useSkadeko';
+import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
 import type { MaalerId, TiltakResultat } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
 
 export function Skadeko() {
   const spill = useSkadeko();
+  // Alt som skjer «ved skrivebordet» står stille mens et tiltak er åpent.
+  const vedSkrivebordet = spill.tilstand === 'spiller' && !spill.pauset;
+  const teams = useTeamsForstyrrelser(vedSkrivebordet);
+  const highscores = useHighscores();
+  const [visHighscores, setVisHighscores] = useState(false);
+  const [visMeny, setVisMeny] = useState(false);
   const [aktivtTiltak, setAktivtTiltak] = useState<MaalerId | null>(null);
   const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
 
-  // Målerne drifter bare mens du faktisk sitter på skrivebordet.
-  const { maalere, paavirk, nullstill } = useMaalere(
-    spill.tilstand === 'spiller' && !spill.pauset,
-  );
+  const { maalere, paavirk, nullstill } = useMaalere(vedSkrivebordet);
+
+  // Holder innmeldingen synlig (med «du er på lista») etter at navnet er lagret.
+  const [lagretNa, setLagretNa] = useState(false);
+  useEffect(() => {
+    if (spill.tilstand === 'spiller') setLagretNa(false);
+  }, [spill.tilstand]);
 
   const apneTiltak = useCallback(
     (id: MaalerId) => {
@@ -42,6 +56,7 @@ export function Skadeko() {
     [paavirk, lukkTiltak],
   );
 
+  /** Alt som må nullstilles når en ny arbeidsdag begynner. */
   const nyDag = useCallback(() => {
     setAktivtTiltak(null);
     setTiltakskvittering(null);
@@ -68,6 +83,8 @@ export function Skadeko() {
             poeng={spill.poeng}
             maalere={maalere}
             onTiltak={spill.tilstand === 'spiller' ? apneTiltak : null}
+            menyApen={visMeny}
+            onMeny={() => setVisMeny((v) => !v)}
           />
         </Container>
       </Box>
@@ -125,11 +142,46 @@ export function Skadeko() {
         )}
 
         {spill.tilstand === 'ferdig' && spill.resultat && (
-          <Medarbeidersamtale resultat={spill.resultat} onNyDag={nyDag} />
+          <Medarbeidersamtale
+            resultat={spill.resultat}
+            onNyDag={nyDag}
+            highscore={
+              highscores.kvalifiserer(spill.resultat.poeng) || lagretNa
+                ? (
+                    <HighscoreInnmelding
+                      key={spill.resultat.sekunderSpilt + '-' + spill.resultat.poeng}
+                      poeng={spill.resultat.poeng}
+                      onLagre={(navn) => {
+                        setLagretNa(true);
+                        highscores.leggTil(navn, spill.resultat!.poeng);
+                      }}
+                    />
+                  )
+                : null
+            }
+          />
         )}
       </Container>
 
+      <Highscores
+        apen={visHighscores}
+        onLukk={() => setVisHighscores(false)}
+        liste={highscores.liste}
+        nullstillesPa={highscores.nullstillesPa}
+      />
+
+      <Sidemeny
+        apen={visMeny}
+        onLukk={() => setVisMeny(false)}
+        onNyDag={nyDag}
+        onVisHighscores={() => {
+          highscores.oppdater();
+          setVisHighscores(true);
+        }}
+      />
+
       <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
+      <TeamsPopup meldinger={teams.meldinger} onLukk={teams.lukk} />
 
       <TiltakModal
         aktiv={aktivtTiltak}
