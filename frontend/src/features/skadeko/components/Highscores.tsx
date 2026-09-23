@@ -15,15 +15,15 @@ type ListeProps = {
 export function Highscores({ apen, onLukk, liste, nullstillesPa }: ListeProps) {
   const dager = Math.max(1, Math.ceil((nullstillesPa.getTime() - Date.now()) / 86_400_000));
   return (
-    <Modal opened={apen} onClose={onLukk} title="🏆 Highscores — ukens mest effektive" centered radius="lg">
+    <Modal opened={apen} onClose={onLukk} title="🏆 Poengtavle — ukens mest effektive" centered radius="lg">
       <Text fz="xs" c="dimmed" mb="sm">
-        Lista nullstilles om {dager} {dager === 1 ? 'dag' : 'dager'} (
+        Tavla nullstilles om {dager} {dager === 1 ? 'dag' : 'dager'} (
         {nullstillesPa.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' })}
         ). Bjarne liker ikke å bli minnet på gamle prestasjoner.
       </Text>
       {liste.length === 0 ? (
         <Text c="dimmed" ta="center" py="lg">
-          Ingen på lista ennå. Bjarne er ikke overrasket.
+          Ingen på tavla ennå. Bjarne er ikke overrasket.
         </Text>
       ) : (
         <Table striped highlightOnHover verticalSpacing="xs">
@@ -64,7 +64,7 @@ export function HighscoreInnmelding({ poeng, onLagre }: InnmeldingProps) {
   if (lagret) {
     return (
       <Text fw={700} c="teal">
-        🏆 Du er på highscore-lista! Bjarne har notert det, motvillig.
+        🏆 Du er på poengtavla! Bjarne har notert det, motvillig.
       </Text>
     );
   }
@@ -79,7 +79,7 @@ export function HighscoreInnmelding({ poeng, onLagre }: InnmeldingProps) {
       }}
     >
       <Stack gap="xs" p="md" style={{ borderRadius: 12, background: 'rgba(250, 176, 5, 0.12)' }}>
-        <Text fw={800}>🏆 Ny highscore: {poeng} poeng! Skriv inn navnet ditt</Text>
+        <Text fw={800}>🏆 Du kom på poengtavla med {poeng} poeng! Skriv inn navnet ditt</Text>
         <Group gap="xs">
           <TextInput
             aria-label="Navn"
