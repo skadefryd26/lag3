@@ -47,6 +47,18 @@
   outline-offset: 2px;
 }
 
+.kant_enkel {
+  border-top: 6px solid #2f9e44;
+}
+
+.kant_middels {
+  border-top: 6px solid #f08c00;
+}
+
+.kant_kompleks {
+  border-top: 6px solid #e03131;
+}
+
 .haster {
   animation: skjelv 0.4s infinite;
 }
