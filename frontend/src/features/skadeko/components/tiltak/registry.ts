@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import type { MaalerId, TiltakResultat } from '../../types/skadeko.types';
+import { KaffepauseTiltak, StresspauseTiltak } from './MiniSpillTiltak';
 
 /**
  * Kontrakten hvert minispill må oppfylle.
@@ -28,7 +29,6 @@ export type TiltakSpill = ComponentType<TiltakSpillProps>;
  * Ingenting annet trenger å endres.
  */
 export const TILTAK_SPILL: Partial<Record<MaalerId, TiltakSpill>> = {
-  // energi: KaffemaskinSpill,
-  // blaere: DoturSpill,
-  // stress: PustSpill,
+  energi: KaffepauseTiltak,
+  stress: StresspauseTiltak,
 };

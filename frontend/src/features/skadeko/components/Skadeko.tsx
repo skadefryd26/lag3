@@ -10,6 +10,8 @@ import { SakDialog } from './SakDialog';
 import { SakKort } from './SakKort';
 import { TeamsPopup } from './TeamsPopup';
 import { TiltakModal } from './tiltak/TiltakModal';
+import { TommingModal } from './tiltak/TommingModal';
+import { MAALER_ETTER_ID } from '../data/maalere';
 import { useMaalere } from '../hooks/useMaalere';
 import { useSkadeko } from '../hooks/useSkadeko';
 import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
@@ -27,7 +29,7 @@ export function Skadeko() {
   const [aktivtTiltak, setAktivtTiltak] = useState<MaalerId | null>(null);
   const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
 
-  const { maalere, paavirk, nullstill } = useMaalere(vedSkrivebordet);
+  const { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming } = useMaalere(vedSkrivebordet);
 
   // Holder innmeldingen synlig (med «du er på lista») etter at navnet er lagret.
   const [lagretNa, setLagretNa] = useState(false);
@@ -37,10 +39,15 @@ export function Skadeko() {
 
   const apneTiltak = useCallback(
     (id: MaalerId) => {
+      // Noen tiltak er ikke et minispill, men noe som skjer mens køen går videre.
+      if (MAALER_ETTER_ID[id].tommingPerSekund) {
+        startTomming(id);
+        return;
+      }
       spill.pause();
       setAktivtTiltak(id);
     },
-    [spill],
+    [spill, startTomming],
   );
 
   const lukkTiltak = useCallback(() => {
@@ -83,6 +90,7 @@ export function Skadeko() {
           <Hud
             poeng={spill.poeng}
             maalere={maalere}
+            tommes={tommes}
             onTiltak={spill.tilstand === 'spiller' ? apneTiltak : null}
             menyApen={visMeny}
             onMeny={() => setVisMeny((v) => !v)}
@@ -181,6 +189,12 @@ export function Skadeko() {
 
       <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
       <TeamsPopup meldinger={teams.meldinger} onLukk={teams.lukk} />
+
+      <TommingModal
+        aktiv={spill.tilstand === 'spiller' ? (tommes[0] ?? null) : null}
+        verdi={tommes[0] ? maalere[tommes[0]] : 0}
+        onAvbryt={() => tommes[0] && stoppTomming(tommes[0])}
+      />
 
       <TiltakModal
         aktiv={aktivtTiltak}
