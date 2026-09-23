@@ -10,9 +10,29 @@ export function Skadeko() {
 
   return (
     <Box mih="100vh" bg="dark.8">
-      <Box bg="violet.7" px="lg" py="md" style={{ boxShadow: '0 4px 0 #3f418f' }}>
+      <Box
+        px="lg"
+        py="sm"
+        pos="sticky"
+        top={0}
+        style={{
+          zIndex: 10,
+          background: 'linear-gradient(90deg, #5f3dc4 0%, #7048e8 50%, #9c36b5 100%)',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+          borderBottom: '1px solid rgba(255,255,255,0.15)',
+        }}
+      >
         <Container size="lg" px={0}>
-          <Hud poeng={spill.poeng} tapt={spill.tapt} liv={spill.liv} />
+          <Hud
+            poeng={spill.poeng}
+            tapt={spill.tapt}
+            liv={spill.liv}
+            press={
+              spill.tilstand === 'spiller' && spill.saker.length > 0
+                ? 1 - Math.min(...spill.saker.map((s) => s.igjen))
+                : 0
+            }
+          />
         </Container>
       </Box>
 
