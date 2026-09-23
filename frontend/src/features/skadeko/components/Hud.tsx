@@ -46,11 +46,11 @@ export function Hud({ poeng, maalere, tommes, onTiltak, menyApen, onMeny }: Prop
       </Group>
 
       <Group
-        gap="lg"
-        align="flex-start"
+        gap="xl"
+        align="center"
         wrap="nowrap"
-        px="md"
-        py={8}
+        px="lg"
+        py={12}
         style={{
           borderRadius: 14,
           background: 'rgba(0,0,0,0.2)',
@@ -58,43 +58,44 @@ export function Hud({ poeng, maalere, tommes, onTiltak, menyApen, onMeny }: Prop
           backdropFilter: 'blur(6px)',
         }}
       >
-        <Stack gap={0} align="center" pt={6}>
-          <Text fz={22} fw={900} c="white" lh={1}>
+        <Stack gap={2} align="center" miw={90}>
+          <Text fz={40} fw={900} c="white" lh={1}>
             {poeng}
           </Text>
-          <Text fz={10} c="rgba(255,255,255,0.65)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
+          <Text fz={13} c="rgba(255,255,255,0.75)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
             poeng
           </Text>
         </Stack>
 
         <Divider orientation="vertical" color="rgba(255,255,255,0.2)" />
 
-        <Group gap="md" wrap="nowrap" align="flex-start" aria-label="Din tilstand">
+        <Group gap="lg" wrap="nowrap" align="flex-start" aria-label="Din tilstand">
           {MAALERE.map((konfig) => {
             const verdi = maalere[konfig.id];
             const kritisk = erKritisk(konfig, verdi);
             const grad = alvorlighet(konfig, verdi);
 
             return (
-              <Stack key={konfig.id} gap={5} w={112}>
+              <Stack key={konfig.id} gap={8} w={160}>
                 <Group gap={4} wrap="nowrap" justify="space-between">
-                  <Text fz={11} fw={700} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.8)'}>
+                  <Text fz={15} fw={700} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.9)'}>
                     {konfig.emoji} {konfig.navn}
                   </Text>
-                  <Text fz={11} fw={800} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.55)'}>
+                  <Text fz={15} fw={800} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.75)'}>
                     {Math.round(verdi)}%
                   </Text>
                 </Group>
 
+                {/* Oppdateres hver frame: en CSS-overgang ville startet på nytt hele tiden og fått baren til å fryse. */}
                 <Progress
-                  size={10}
+                  size={14}
                   radius="xl"
                   bg="rgba(255,255,255,0.18)"
                   value={verdi}
                   color={konfig.farge}
                   animated={kritisk}
                   striped={kritisk}
-                  transitionDuration={200}
+                  transitionDuration={0}
                   aria-label={`${konfig.navn}: ${Math.round(verdi)} prosent`}
                 />
 
@@ -106,14 +107,14 @@ export function Hud({ poeng, maalere, tommes, onTiltak, menyApen, onMeny }: Prop
                   w={230}
                 >
                   <Button
-                    size="compact-xs"
+                    size="md"
                     variant={kritisk ? 'filled' : 'white'}
                     color={kritisk ? konfig.farge : undefined}
                     fullWidth
                     disabled={!onTiltak || tommes.includes(konfig.id)}
                     onClick={() => onTiltak?.(konfig.id)}
                     className={kritisk && grad > 0.85 ? classes.roper : undefined}
-                    styles={{ label: { fontSize: 11, fontWeight: 700 } }}
+                    styles={{ label: { fontSize: 15, fontWeight: 800 } }}
                   >
                     {tommes.includes(konfig.id) ? (konfig.knappUnderveis ?? konfig.knapp) : konfig.knapp}
                   </Button>

@@ -18,13 +18,20 @@ const TIDSBONUS_ANDEL = 0.5;
 /** Combo: ekstra poeng per riktige svar på rad, fra og med det andre. */
 const COMBO_PER_STEG = 5;
 
-/** Sakene kommer gradvis raskere. Litt roligere enn før — nå må du lese. */
+/*
+ * Vanskelighetsgraden øker jevnt og uten tak — dagen tar slutt fordi du til
+ * slutt ikke henger med, ikke fordi en klokke sier det. Myke kurver, ingen
+ * plutselige hopp:
+ *
+ *   sak nr.         0     10     20     40     60
+ *   ny sak hvert   12 s  7,5 s  5,5 s  3,5 s  2,6 s
+ *   tid per sak    45 s   32 s   25 s   17 s   13 s  (× kategoriens tålmodighet)
+ */
 const spawnIntervall = (antallSpawnet: number) =>
-  Math.max(1800, 4200 * Math.pow(0.97, antallSpawnet));
+  Math.max(1200, 12000 / (1 + antallSpawnet * 0.06));
 
-/** ...og grunntiden krymper. Ganges med kategoriens tålmodighet. */
 const grunnVarighet = (antallSpawnet: number) =>
-  Math.max(9000, 16000 - antallSpawnet * 180);
+  Math.max(6000, 45000 / (1 + antallSpawnet * 0.04));
 
 function bland<T>(liste: T[]): T[] {
   const kopi = [...liste];
@@ -67,7 +74,7 @@ export function useSkadeko() {
   const tapteSaker = useRef<string[]>([]);
   const kjorer = useRef(false);
 
-  const avsluttDagen = useCallback(() => {
+  const avsluttDagen = useCallback((aarsak: string) => {
     kjorer.current = false;
     pausetPa.current = 0;
     cancelAnimationFrame(frame.current);
@@ -81,6 +88,7 @@ export function useSkadeko() {
       tittel: finnTittel(poengRef.current),
       tapteSaker: [...tapteSaker.current],
       sekunderSpilt: sekunder,
+      aarsak,
     });
     setTilstand('ferdig');
   }, []);
@@ -144,7 +152,7 @@ export function useSkadeko() {
         setTapt(taptRef.current);
         setTapsmelding(sisteTap);
         if (taptRef.current >= LIV) {
-          avsluttDagen();
+          avsluttDagen(`${LIV} kunder gikk lei før du rakk å svare.`);
           return;
         }
       }
@@ -152,6 +160,15 @@ export function useSkadeko() {
       frame.current = requestAnimationFrame(tick);
     },
     [avsluttDagen, lagSak],
+  );
+
+  /** Dagen er tapt av noe annet enn saker — f.eks. at en måler nådde krisepunktet. */
+  const tapDagen = useCallback(
+    (aarsak: string) => {
+      if (!kjorer.current) return;
+      avsluttDagen(aarsak);
+    },
+    [avsluttDagen],
   );
 
   const apneSak = useCallback((id: number) => {
@@ -293,6 +310,7 @@ export function useSkadeko() {
     aapenSak,
     resultat,
     startDagen,
+    tapDagen,
     apneSak,
     lukkSak,
     svarPaSak,
