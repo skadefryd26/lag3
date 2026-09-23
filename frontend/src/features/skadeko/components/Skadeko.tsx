@@ -1,5 +1,5 @@
 import { IconCircleFilled, IconClockPlay, IconCoffee, IconFlame, IconRobot } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { Highscores, HighscoreInnmelding } from './Highscores';
 import { Sidemeny } from './Sidemeny';
@@ -9,21 +9,61 @@ import { Medarbeidersamtale } from './Medarbeidersamtale';
 import { SakDialog } from './SakDialog';
 import { SakKort } from './SakKort';
 import { TeamsPopup } from './TeamsPopup';
+import { TiltakModal } from './tiltak/TiltakModal';
+import { useMaalere } from '../hooks/useMaalere';
 import { useSkadeko } from '../hooks/useSkadeko';
 import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
+import type { MaalerId, TiltakResultat } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
 
 export function Skadeko() {
   const spill = useSkadeko();
-  const teams = useTeamsForstyrrelser(spill.tilstand === 'spiller');
+  // Alt som skjer «ved skrivebordet» står stille mens et tiltak er åpent.
+  const vedSkrivebordet = spill.tilstand === 'spiller' && !spill.pauset;
+  const teams = useTeamsForstyrrelser(vedSkrivebordet);
   const highscores = useHighscores();
   const [visHighscores, setVisHighscores] = useState(false);
   const [visMeny, setVisMeny] = useState(false);
+  const [aktivtTiltak, setAktivtTiltak] = useState<MaalerId | null>(null);
+  const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
+
+  const { maalere, paavirk, nullstill } = useMaalere(vedSkrivebordet);
+
   // Holder innmeldingen synlig (med «du er på lista») etter at navnet er lagret.
   const [lagretNa, setLagretNa] = useState(false);
   useEffect(() => {
     if (spill.tilstand === 'spiller') setLagretNa(false);
   }, [spill.tilstand]);
+
+  const apneTiltak = useCallback(
+    (id: MaalerId) => {
+      spill.pause();
+      setAktivtTiltak(id);
+    },
+    [spill],
+  );
+
+  const lukkTiltak = useCallback(() => {
+    setAktivtTiltak(null);
+    spill.fortsett();
+  }, [spill]);
+
+  const fullfoerTiltak = useCallback(
+    (id: MaalerId, resultat: TiltakResultat) => {
+      paavirk(id, resultat.endring);
+      setTiltakskvittering(resultat.melding ?? null);
+      lukkTiltak();
+    },
+    [paavirk, lukkTiltak],
+  );
+
+  /** Alt som må nullstilles når en ny arbeidsdag begynner. */
+  const nyDag = useCallback(() => {
+    setAktivtTiltak(null);
+    setTiltakskvittering(null);
+    nullstill();
+    spill.startDagen();
+  }, [nullstill, spill]);
 
   return (
     <Box mih="100vh" bg="#f1f3f5">
@@ -42,13 +82,8 @@ export function Skadeko() {
         <Container size="lg" px={0}>
           <Hud
             poeng={spill.poeng}
-            tapt={spill.tapt}
-            liv={spill.liv}
-            press={
-              spill.tilstand === 'spiller' && spill.saker.length > 0
-                ? 1 - Math.min(...spill.saker.map((s) => s.igjen))
-                : 0
-            }
+            maalere={maalere}
+            onTiltak={spill.tilstand === 'spiller' ? apneTiltak : null}
             menyApen={visMeny}
             onMeny={() => setVisMeny((v) => !v)}
           />
@@ -67,14 +102,19 @@ export function Skadeko() {
                 riktige på rad. Feil svar koster. Mister du tre kunder, er du offisielt{' '}
                 <b>sykmeldt</b> — og da kaller Bjarne deg inn til medarbeidersamtale.
               </Text>
-              <Button size="lg" color="teal" onClick={spill.startDagen} leftSection={<IconClockPlay size={20} />}>
+              <Text c="dimmed" fz="sm">
+                Samtidig tappes <b>energien</b>, <b>blæra</b> fylles og <b>stresset</b> stiger.
+                Knappene under stolpene øverst tar deg vekk fra skrivebordet — men køen står
+                stille mens du er borte.
+              </Text>
+              <Button size="lg" color="teal" onClick={nyDag} leftSection={<IconClockPlay size={20} />}>
                 Stemple inn
               </Button>
             </Stack>
           </Paper>
         )}
 
-          {spill.tilstand === 'spiller' && (
+        {spill.tilstand === 'spiller' && (
           <Stack gap="sm">
             <Group justify="space-between">
               <Group gap="xs">
@@ -103,7 +143,7 @@ export function Skadeko() {
         {spill.tilstand === 'ferdig' && spill.resultat && (
           <Medarbeidersamtale
             resultat={spill.resultat}
-            onNyDag={spill.startDagen}
+            onNyDag={nyDag}
             highscore={
               highscores.kvalifiserer(spill.resultat.poeng) || lagretNa
                 ? (
@@ -132,7 +172,7 @@ export function Skadeko() {
       <Sidemeny
         apen={visMeny}
         onLukk={() => setVisMeny(false)}
-        onNyDag={spill.startDagen}
+        onNyDag={nyDag}
         onVisHighscores={() => {
           highscores.oppdater();
           setVisHighscores(true);
@@ -141,6 +181,27 @@ export function Skadeko() {
 
       <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
       <TeamsPopup meldinger={teams.meldinger} onLukk={teams.lukk} />
+
+      <TiltakModal
+        aktiv={aktivtTiltak}
+        verdi={aktivtTiltak ? maalere[aktivtTiltak] : 0}
+        onFerdig={fullfoerTiltak}
+        onLukk={lukkTiltak}
+      />
+
+      {spill.tilstand === 'spiller' && tiltakskvittering && (
+        <Notification
+          key={tiltakskvittering}
+          color="teal"
+          onClose={() => setTiltakskvittering(null)}
+          pos="fixed"
+          bottom={156}
+          left="50%"
+          style={{ transform: 'translateX(-50%)', zIndex: 5 }}
+        >
+          {tiltakskvittering}
+        </Notification>
+      )}
 
       {spill.tilstand === 'spiller' && spill.tilbakemelding && (
         <Notification

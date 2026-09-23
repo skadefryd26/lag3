@@ -100,6 +100,15 @@
   animation: tone-frem 0.5s ease-out;
 }
 
+/* Knappen under en stolpe som har gått i det røde. Den vil bli trykket på. */
+.roper {
+  animation: puls 1.1s ease-in-out infinite;
+}
+
+.plassholder {
+  border: 1px dashed var(--mantine-color-violet-5);
+}
+
 @keyframes dal-ned {
   from {
     transform: translateY(-12px);
@@ -142,10 +151,21 @@
   }
 }
 
+@keyframes puls {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 212, 59, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 212, 59, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sak,
   .haster,
   .samtale,
+  .roper,
   .tenker::after {
     animation: none;
   }
