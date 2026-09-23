@@ -30,6 +30,18 @@ const COMBO_PER_STEG = 5;
 const spawnIntervall = (antallSpawnet: number) =>
   Math.max(1200, 12000 / (1 + antallSpawnet * 0.06));
 
+/** Saker per level. Level 10 er nådd etter 54 saker — vanskeligheten øker likevel videre. */
+const SAKER_PER_LEVEL = 6;
+export const MAKS_LEVEL = 10;
+const levelFor = (antallSpawnet: number) =>
+  Math.min(MAKS_LEVEL, 1 + Math.floor(antallSpawnet / SAKER_PER_LEVEL));
+
+/** Demo/testing: `?level=10` i adressen starter dagen på det levelet. */
+function startLevelFraAdressen(): number {
+  const tall = Number(new URLSearchParams(window.location.search).get('level'));
+  return Number.isInteger(tall) && tall >= 1 && tall <= MAKS_LEVEL ? tall : 1;
+}
+
 const grunnVarighet = (antallSpawnet: number) =>
   Math.max(6000, 45000 / (1 + antallSpawnet * 0.04));
 
@@ -54,6 +66,7 @@ export function useSkadeko() {
   const [behandlet, setBehandlet] = useState(0);
   const [tapt, setTapt] = useState(0);
   const [combo, setCombo] = useState(0);
+  const [level, setLevel] = useState(1);
   const [tapsmelding, setTapsmelding] = useState<string | null>(null);
   const [tilbakemelding, setTilbakemelding] = useState<Tilbakemelding | null>(null);
   const [aapenId, setAapenId] = useState<number | null>(null);
@@ -103,6 +116,7 @@ export function useSkadeko() {
     const svar = bland(mal.svar);
     const varighet = grunnVarighet(spawnet.current) * KATEGORIER[mal.kategori].talmodighet;
     spawnet.current += 1;
+    setLevel(levelFor(spawnet.current));
 
     return {
       ...mal,
@@ -232,7 +246,9 @@ export function useSkadeko() {
     sakerRef.current = [];
     tapteSaker.current = [];
     nesteId.current = 0;
-    spawnet.current = 0;
+    const startLevel = startLevelFraAdressen();
+    spawnet.current = (startLevel - 1) * SAKER_PER_LEVEL;
+    setLevel(startLevel);
     poengRef.current = 0;
     behandletRef.current = 0;
     taptRef.current = 0;
@@ -305,6 +321,7 @@ export function useSkadeko() {
     behandlet,
     tapt,
     combo,
+    level,
     tapsmelding,
     tilbakemelding,
     aapenSak,

@@ -6,7 +6,8 @@ import type { MaalerId, Maalere } from '../types/skadeko.types';
  * Holder styr på Energi, Blære og Stress.
  *
  * Målerne drifter sakte mens du spiller, og står stille når spillet er pauset
- * — for eksempel mens et tiltak er åpent.
+ * — for eksempel mens et tiltak er åpent. Unntaket er en måler som tømmes
+ * (blæra på do): den går ned selv om resten står stille.
  *
  * Minispillene kaller `paavirk(id, n)` med hvor mange prosentpoeng spilleren
  * fortjente. Tiltak uten minispill (do-turen) bruker `startTomming(id)`.
@@ -69,9 +70,14 @@ export function useMaalere(aktiv: boolean) {
     return () => clearTimeout(id);
   }, [iMaal]);
 
+  const aktivRef = useRef(aktiv);
+  aktivRef.current = aktiv;
+  // Loopen går også under en tømming, selv om spillet ellers er pauset.
+  const kjor = aktiv || tommes.length > 0;
+
   // Driften. Én loop for alle tre.
   useEffect(() => {
-    if (!aktiv) {
+    if (!kjor) {
       cancelAnimationFrame(frame.current);
       sist.current = 0;
       return;
@@ -83,7 +89,8 @@ export function useMaalere(aktiv: boolean) {
       sist.current = na;
 
       if (sekunder > 0) {
-        spilt.current += sekunder;
+        const iSpill = aktivRef.current;
+        if (iSpill) spilt.current += sekunder;
         // Dobbelt så rask drift etter 4 minutter, tre ganger etter 8.
         const opptrapping = 1 + spilt.current / 240;
         setMaalere((forrige) => {
@@ -91,9 +98,12 @@ export function useMaalere(aktiv: boolean) {
           for (const konfig of MAALERE) {
             const retning = konfig.retning === 'tappes' ? -1 : 1;
             // Under tømming går måleren i spillerens favør i stedet for å drifte.
+            // Mens spillet er pauset (f.eks. på do) står de andre målerne stille.
             const fart = tommesRef.current.includes(konfig.id)
               ? -(konfig.tommingPerSekund ?? 0)
-              : konfig.driftPerSekund * opptrapping;
+              : iSpill
+                ? konfig.driftPerSekund * opptrapping
+                : 0;
             neste[konfig.id] = klem(forrige[konfig.id] + fart * sekunder * retning);
           }
           return neste;
@@ -105,7 +115,7 @@ export function useMaalere(aktiv: boolean) {
 
     frame.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame.current);
-  }, [aktiv]);
+  }, [kjor]);
 
   return { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming };
 }

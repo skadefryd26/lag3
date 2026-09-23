@@ -21,8 +21,8 @@ function underveis(verdi: number): string {
 }
 
 /**
- * Viser tydelig at en måler tømmes (blæra på do-tur). Skadekøen går videre
- * bak modalen — det er hele poenget: sakene venter ikke på deg.
+ * Viser tydelig at en måler tømmes (blæra på do-tur). Skadekøen står stille
+ * imens, som i de andre pausene.
  */
 export function TommingModal({ aktiv, verdi, onAvbryt }: Props) {
   const konfig = aktiv ? MAALER_ETTER_ID[aktiv] : null;
@@ -45,8 +45,8 @@ export function TommingModal({ aktiv, verdi, onAvbryt }: Props) {
             <Text fw={800} fz="lg">
               {konfig.tiltakTittel}
             </Text>
-            <Badge variant="light" color="orange" size="sm">
-              Køen går videre ⏳
+            <Badge variant="light" color="gray" size="sm">
+              Skadekøen står stille
             </Badge>
           </Group>
         )
