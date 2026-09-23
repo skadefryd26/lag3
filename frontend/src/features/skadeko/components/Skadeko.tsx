@@ -1,3 +1,4 @@
+import { IconCircleFilled, IconClockPlay, IconCoffee, IconFlame, IconRobot } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { Highscores, HighscoreInnmelding } from './Highscores';
@@ -72,7 +73,7 @@ export function Skadeko() {
   }, [nullstill, spill]);
 
   return (
-    <Box mih="100vh" bg="dark.8">
+    <Box mih="100vh" bg="#f1f3f5">
       <Box
         px="lg"
         py="sm"
@@ -81,7 +82,7 @@ export function Skadeko() {
         style={{
           zIndex: 10,
           background: 'linear-gradient(90deg, #5f3dc4 0%, #7048e8 50%, #9c36b5 100%)',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+          boxShadow: '0 2px 12px rgba(16,24,40,0.12)',
           borderBottom: '1px solid rgba(255,255,255,0.15)',
         }}
       >
@@ -99,11 +100,9 @@ export function Skadeko() {
 
       <Container size="lg" py="xl">
         {spill.tilstand === 'ikke-startet' && (
-          <Paper radius="lg" p="xl" shadow="md" withBorder maw={560} mx="auto">
+          <Paper radius="lg" p="xl" shadow="sm" maw={560} mx="auto" bg="white">
             <Stack gap="md" align="center" ta="center">
-              <Text fz={54} lh={1} aria-hidden>
-                ☕🤖
-              </Text>
+              <Group gap="sm" c="violet.6" aria-hidden><IconCoffee size={48} stroke={1.5} /><IconRobot size={48} stroke={1.5} /></Group>
               <Title order={2}>God morgen, skadebehandler!</Title>
               <Text c="dimmed">
                 Skadesakene strømmer inn. Klikk på en sak, les hva kunden skriver, og velg riktig
@@ -116,8 +115,8 @@ export function Skadeko() {
                 Knappene under stolpene øverst tar deg vekk fra skrivebordet — men køen står
                 stille mens du er borte.
               </Text>
-              <Button size="lg" color="teal" onClick={nyDag}>
-                Stemple inn ☕
+              <Button size="lg" color="teal" onClick={nyDag} leftSection={<IconClockPlay size={20} />}>
+                Stemple inn
               </Button>
             </Stack>
           </Paper>
@@ -127,13 +126,13 @@ export function Skadeko() {
           <Stack gap="sm">
             <Group justify="space-between">
               <Group gap="xs">
-                <Badge color="green" variant="light">🟢 Enkel · 10p · god tid</Badge>
-                <Badge color="yellow" variant="light">🟡 Middels · 20p</Badge>
-                <Badge color="red" variant="light">🔴 Kompleks · 30p · kort tid</Badge>
+                <Badge color="green" variant="light" leftSection={<IconCircleFilled size={8} />}>Enkel · 10p · god tid</Badge>
+                <Badge color="yellow" variant="light" leftSection={<IconCircleFilled size={8} />}>Middels · 20p</Badge>
+                <Badge color="red" variant="light" leftSection={<IconCircleFilled size={8} />}>Kompleks · 30p · kort tid</Badge>
               </Group>
               {spill.combo >= 2 && (
-                <Badge color="orange" size="lg" variant="filled">
-                  🔥 Combo x{spill.combo}
+                <Badge color="orange" size="lg" variant="filled" leftSection={<IconFlame size={16} />}>
+                  Combo x{spill.combo}
                 </Badge>
               )}
             </Group>
