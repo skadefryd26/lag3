@@ -22,23 +22,23 @@ const COMBO_PER_STEG = 5;
 /*
  * Vanskelighetsgraden følger aktiv spilletid (pauser teller ikke) og øker
  * jevnt uten tak — dagen tar slutt fordi du til slutt ikke henger med.
- * Level 10 nås etter 2 minutter; etter det blir det fortsatt verre.
+ * Level 10 nås etter 100 sekunder; etter det blir det fortsatt verre.
  *
- *   aktiv tid        0 s    30 s   60 s   90 s   120 s  (level 10)
- *   ny sak hvert    12 s   6,6 s  4,4 s  3,4 s  2,7 s
- *   tid per sak     45 s    28 s   20 s   16 s   13 s  (× kategoriens tålmodighet)
+ *   aktiv tid        0 s    25 s   50 s   75 s   100 s  (level 10)
+ *   ny sak hvert    12 s   5,6 s  3,7 s  2,7 s  2,2 s
+ *   tid per sak     45 s    26 s   18 s   14 s   11 s  (× kategoriens tålmodighet)
  */
 export const MAKS_LEVEL = 10;
-const TID_TIL_MAKS_LEVEL_MS = 2 * 60 * 1000;
+const TID_TIL_MAKS_LEVEL_MS = 100 * 1000;
 
 /** 0 ved start, 1 ved level 10, og videre oppover. */
 const framdrift = (aktivMs: number) => aktivMs / TID_TIL_MAKS_LEVEL_MS;
 
 const spawnIntervall = (aktivMs: number) =>
-  Math.max(1200, 12000 / (1 + 3.5 * framdrift(aktivMs)));
+  Math.max(1200, 12000 / (1 + 4.5 * framdrift(aktivMs)));
 
 const grunnVarighet = (aktivMs: number) =>
-  Math.max(6000, 45000 / (1 + 2.4 * framdrift(aktivMs)));
+  Math.max(6000, 45000 / (1 + 3 * framdrift(aktivMs)));
 
 const levelFor = (aktivMs: number) =>
   Math.min(MAKS_LEVEL, 1 + Math.floor(framdrift(aktivMs) * (MAKS_LEVEL - 1)));
@@ -271,13 +271,14 @@ export function useSkadeko() {
     setPoeng(poengRef.current);
   }, [avsluttDagen]);
 
-  const startDagen = useCallback(() => {
+  /** Starter en ny arbeidsdag. `level` hopper rett til et level (til testing). */
+  const startDagen = useCallback((level?: number) => {
     cancelAnimationFrame(frame.current);
     sakerRef.current = [];
     tapteSaker.current = [];
     nesteId.current = 0;
     spawnet.current = 0;
-    const startLevel = startLevelFraAdressen();
+    const startLevel = level ?? startLevelFraAdressen();
     forsprang.current = ((startLevel - 1) / (MAKS_LEVEL - 1)) * TID_TIL_MAKS_LEVEL_MS;
     pauseTotal.current = 0;
     levelRef.current = startLevel;

@@ -13,7 +13,7 @@ import { TiltakModal } from './tiltak/TiltakModal';
 import { TommingModal } from './tiltak/TommingModal';
 import { MAALERE, MAALER_ETTER_ID, iKrise } from '../data/maalere';
 import { useMaalere } from '../hooks/useMaalere';
-import { useSkadeko } from '../hooks/useSkadeko';
+import { MAKS_LEVEL, useSkadeko } from '../hooks/useSkadeko';
 import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
 import type { MaalerId, TiltakResultat } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
@@ -84,12 +84,18 @@ export function Skadeko() {
   );
 
   /** Alt som må nullstilles når en ny arbeidsdag begynner. */
-  const nyDag = useCallback(() => {
-    setAktivtTiltak(null);
-    setTiltakskvittering(null);
-    nullstill();
-    spill.startDagen();
-  }, [nullstill, spill]);
+  const startDag = useCallback(
+    (level?: number) => {
+      setAktivtTiltak(null);
+      setTiltakskvittering(null);
+      nullstill();
+      spill.startDagen(level);
+    },
+    [nullstill, spill],
+  );
+  const nyDag = useCallback(() => startDag(), [startDag]);
+  /** Til testing og demo: hopp rett til det vanskeligste levelet. */
+  const testMaksLevel = useCallback(() => startDag(MAKS_LEVEL), [startDag]);
 
   return (
     <Box mih="100vh" bg="#f1f3f5">
@@ -172,6 +178,15 @@ export function Skadeko() {
                 style={{ alignSelf: 'center' }}
               >
                 Stemple inn
+              </Button>
+              <Button
+                variant="subtle"
+                color="gray"
+                size="xs"
+                onClick={testMaksLevel}
+                style={{ alignSelf: 'center' }}
+              >
+                Test level {MAKS_LEVEL}
               </Button>
             </Stack>
           </Paper>
