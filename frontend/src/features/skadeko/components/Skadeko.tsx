@@ -3,11 +3,14 @@ import { Hud } from './Hud';
 import { Medarbeidersamtale } from './Medarbeidersamtale';
 import { SakDialog } from './SakDialog';
 import { SakKort } from './SakKort';
+import { TeamsPopup } from './TeamsPopup';
 import { useSkadeko } from '../hooks/useSkadeko';
+import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
 import classes from './Skadeko.module.css';
 
 export function Skadeko() {
   const spill = useSkadeko();
+  const teams = useTeamsForstyrrelser(spill.tilstand === 'spiller');
 
   return (
     <Box mih="100vh" bg="dark.8">
@@ -90,6 +93,7 @@ export function Skadeko() {
       </Container>
 
       <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
+      <TeamsPopup meldinger={teams.meldinger} onLukk={teams.lukk} />
 
       {spill.tilstand === 'spiller' && spill.tilbakemelding && (
         <Notification
