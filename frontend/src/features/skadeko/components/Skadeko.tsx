@@ -7,11 +7,14 @@ import { Hud } from './Hud';
 import { Medarbeidersamtale } from './Medarbeidersamtale';
 import { SakDialog } from './SakDialog';
 import { SakKort } from './SakKort';
+import { TeamsPopup } from './TeamsPopup';
 import { useSkadeko } from '../hooks/useSkadeko';
+import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
 import classes from './Skadeko.module.css';
 
 export function Skadeko() {
   const spill = useSkadeko();
+  const teams = useTeamsForstyrrelser(spill.tilstand === 'spiller');
   const highscores = useHighscores();
   const [visHighscores, setVisHighscores] = useState(false);
   const [visMeny, setVisMeny] = useState(false);
@@ -138,6 +141,7 @@ export function Skadeko() {
       />
 
       <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
+      <TeamsPopup meldinger={teams.meldinger} onLukk={teams.lukk} />
 
       {spill.tilstand === 'spiller' && spill.tilbakemelding && (
         <Notification
