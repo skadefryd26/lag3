@@ -1,4 +1,5 @@
 import { Badge, Button, Group, Modal, Progress, Stack, Text } from '@mantine/core';
+import { sakensIkon } from '../data/ikoner';
 import { KATEGORIER } from '../data/skadesaker';
 import type { Sak } from '../types/skadeko.types';
 
@@ -25,11 +26,9 @@ export function SakDialog({ sak, onSvar, onLukk }: Props) {
         sak &&
         kategori && (
           <Group gap="sm">
-            <Text fz={26} lh={1}>
-              {sak.emoji}
-            </Text>
+            <IconForSak emoji={sak.emoji} />
             <Badge color={kategori.farge} variant="filled" size="lg" radius="sm">
-              {kategori.ikon} {kategori.navn}
+              {kategori.navn}
             </Badge>
             <Text fw={700}>{sak.kunde}</Text>
           </Group>
@@ -70,4 +69,9 @@ export function SakDialog({ sak, onSvar, onLukk }: Props) {
       )}
     </Modal>
   );
+}
+
+function IconForSak({ emoji }: { emoji: string }) {
+  const Ikon = sakensIkon(emoji);
+  return <Ikon size={26} stroke={1.75} color="var(--mantine-color-violet-6)" aria-hidden />;
 }

@@ -1,4 +1,5 @@
 import { Badge, Box, Group, Progress, Stack, Text } from '@mantine/core';
+import { sakensIkon } from '../data/ikoner';
 import { KATEGORIER } from '../data/skadesaker';
 import type { Sak } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
@@ -13,6 +14,7 @@ export function SakKort({ sak, onApne }: Props) {
   const advarsel = !haster && sak.igjen < 0.6;
   const farge = haster ? 'red' : advarsel ? 'yellow' : 'teal';
   const kategori = KATEGORIER[sak.kategori];
+  const Ikon = sakensIkon(sak.emoji);
 
   return (
     <Box
@@ -23,23 +25,29 @@ export function SakKort({ sak, onApne }: Props) {
       aria-label={`Åpne ${kategori.navn.toLowerCase()} sak fra ${sak.kunde}: ${sak.beskrivelse}`}
     >
       {haster && <span className={classes.stempel}>HASTER</span>}
-      <Stack gap={4} align="flex-start">
-        <Group gap={6} wrap="nowrap">
-          <Text fz={28} lh={1}>
-            {sak.emoji}
-          </Text>
-          <Badge color={kategori.farge} variant="filled" size="sm" radius="sm">
-            {kategori.ikon} {kategori.navn} · {kategori.poeng}p
-          </Badge>
+      <Stack gap={8} align="flex-start">
+        <Group gap={10} wrap="nowrap">
+          <Box
+            className={classes.ikonboks}
+            bg={`var(--mantine-color-${kategori.farge}-0)`}
+            c={`${kategori.farge}.8`}
+          >
+            <Ikon size={22} stroke={1.75} aria-hidden />
+          </Box>
+          <Stack gap={2}>
+            <Text fz="sm" fw={600} lh={1.2} c="dark.7">
+              {sak.kunde}
+            </Text>
+            <Badge color={kategori.farge} variant="light" size="xs" radius="sm">
+              {kategori.navn} · {kategori.poeng}p
+            </Badge>
+          </Stack>
         </Group>
-        <Text fz="xs" fw={700} c="dimmed">
-          {sak.kunde}
-        </Text>
-        <Text fz="sm" lh={1.25} ta="left" lineClamp={3}>
-          «{sak.beskrivelse}»
+        <Text fz="sm" lh={1.4} ta="left" c="dark.5" lineClamp={3}>
+          {sak.beskrivelse}
         </Text>
       </Stack>
-      <Progress value={sak.igjen * 100} color={farge} size="sm" radius="xl" mt="sm" />
+      <Progress value={sak.igjen * 100} color={farge} size={6} radius="xl" mt="md" bg="gray.2" />
     </Box>
   );
 }
