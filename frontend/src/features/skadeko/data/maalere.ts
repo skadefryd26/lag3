@@ -1,4 +1,5 @@
 import type { MantineColor } from '@mantine/core';
+import { ENERGI_TAK } from '../../stresspause/lib/stress';
 import type { MaalerId } from '../types/skadeko.types';
 
 /**
@@ -25,6 +26,8 @@ export type MaalerKonfig = {
    * prosentpoeng per sekund mens skadekøen går videre, til den er i mål.
    */
   tommingPerSekund?: number;
+  /** Høyeste nivå tiltaket kan løfte en «tappes»-måler til. */
+  tiltakTak?: number;
   /** Knappeteksten mens tømmingen pågår. */
   knappUnderveis?: string;
   /** Teksten på knappen under stolpen. */
@@ -48,6 +51,7 @@ export const MAALERE: MaalerKonfig[] = [
     retning: 'tappes',
     driftPerSekund: 1.6,
     knapp: 'Hent kaffe',
+    tiltakTak: ENERGI_TAK,
     tiltakTittel: 'Kaffepause',
     tiltakBeskrivelse: 'Hell kaffen nøyaktig opp til streken. Jo bedre helling, jo mer energi.',
     bjarneKommentar:
@@ -60,7 +64,7 @@ export const MAALERE: MaalerKonfig[] = [
     emoji: '🚽',
     farge: 'yellow',
     retning: 'fylles',
-    driftPerSekund: 2.1,
+    driftPerSekund: 1.5,
     tommingPerSekund: 15,
     knapp: 'Gå på do',
     knappUnderveis: 'På do… 🚽',
@@ -76,7 +80,7 @@ export const MAALERE: MaalerKonfig[] = [
     emoji: '🤯',
     farge: 'red',
     retning: 'fylles',
-    driftPerSekund: 1.9,
+    driftPerSekund: 1.2,
     knapp: 'Stresspause',
     tiltakTittel: 'Stresspause',
     tiltakBeskrivelse: 'Et tilfeldig mini-spill på maks ti sekunder. Du kan ikke tape.',
@@ -101,6 +105,11 @@ export const STARTVERDIER: Record<MaalerId, number> = {
 export const VARSELGRENSE = 0.75;
 
 /** Sant når måleren er i det røde og spilleren bør gjøre noe med det. */
+/** Måleren har nådd bunnen (energi 0 %) eller toppen (blære/stress 100 %) — dagen er tapt. */
+export function iKrise(konfig: MaalerKonfig, verdi: number): boolean {
+  return konfig.retning === 'tappes' ? verdi <= 0 : verdi >= 100;
+}
+
 export function erKritisk(konfig: MaalerKonfig, verdi: number): boolean {
   return konfig.retning === 'tappes' ? verdi <= 25 : verdi >= 75;
 }

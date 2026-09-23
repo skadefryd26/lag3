@@ -15,7 +15,7 @@ const AKSELERASJON = 0.6;
 /** Etter at du slipper, drypper det litt i så mange sekunder. */
 const DRYPP = 0.2;
 /** Så langt fra streken (andel av koppen) gir 0 poeng. */
-const TOLERANSE = 0.2;
+const TOLERANSE = 0.15;
 
 type Fase = 'klar' | 'heller' | 'drypper' | 'vurdert';
 

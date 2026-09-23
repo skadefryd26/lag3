@@ -60,4 +60,6 @@ export type Dagsresultat = {
   tittel: string;
   tapteSaker: string[];
   sekunderSpilt: number;
+  /** Hvorfor arbeidsdagen tok slutt. */
+  aarsak: string;
 };
