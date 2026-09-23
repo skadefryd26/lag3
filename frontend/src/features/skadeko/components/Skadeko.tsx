@@ -1,4 +1,4 @@
-import { IconCircleFilled, IconClockPlay, IconCoffee, IconFlame, IconRobot } from '@tabler/icons-react';
+import { IconCircleFilled, IconClockPlay, IconFlame } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { Highscores, HighscoreInnmelding } from './Highscores';
@@ -107,23 +107,54 @@ export function Skadeko() {
 
       <Container size="lg" py="xl">
         {spill.tilstand === 'ikke-startet' && (
-          <Paper radius="lg" p="xl" shadow="sm" maw={560} mx="auto" bg="white">
-            <Stack gap="md" align="center" ta="center">
-              <Group gap="sm" c="violet.6" aria-hidden><IconCoffee size={48} stroke={1.5} /><IconRobot size={48} stroke={1.5} /></Group>
-              <Title order={2}>God morgen, skadebehandler!</Title>
-              <Text c="dimmed">
-                Skadesakene strømmer inn. Klikk på en sak, les hva kunden skriver, og velg riktig
-                håndtering. Riktig svar gir poeng — mer for vanskelige saker, raske svar og flere
-                riktige på rad. Feil svar koster. Mister du tre kunder, går tom for energi, eller lar
-                blæra eller stresset nå 100 %, er du offisielt <b>sykmeldt</b> — og da kaller Bjarne
-                deg inn til medarbeidersamtale.
+          <Paper radius="lg" p="xl" shadow="sm" maw={600} mx="auto" bg="white">
+            <Stack gap="md">
+              <Stack gap="xs" align="center" ta="center">
+                <Title order={2}>Velkommen til Skadekø!</Title>
+                <Text c="dark.4">
+                  Du er skadebehandler, og innboksen fylles raskere enn du rekker å svare. Din jobb
+                  er å holde hodet kaldt.
+                </Text>
+              </Stack>
+
+              <Text c="dark.4">
+                For hver sak må du velge riktig svar før kundens tålmodighet renner ut. Riktige svar
+                gir poeng og fornøyde kunder. Feil svar eller lang ventetid skaper misnøye og øker
+                presset.
               </Text>
-              <Text c="dimmed" fz="sm">
-                Samtidig tappes <b>energien</b>, <b>blæra</b> fylles og <b>stresset</b> stiger.
-                Knappene under stolpene øverst tar deg vekk fra skrivebordet — men køen står
-                stille mens du er borte.
+
+              <Stack gap={8}>
+                <Text fw={700}>Men kundene er ikke den eneste utfordringen. Du må også holde styr på:</Text>
+                <Introrad tittel={`${MAALER_ETTER_ID.energi.emoji} Energi`}>
+                  Drikk kaffe for å hente inn energi. Hvis energien når 0 %, er du tom for krefter.
+                </Introrad>
+                <Introrad tittel={`${MAALER_ETTER_ID.blaere.emoji} Blære`}>
+                  Kaffe har en pris. Husk toalettpauser før blæren når 100 %.
+                </Introrad>
+                <Introrad tittel={`${MAALER_ETTER_ID.stress.emoji} Stress`}>
+                  Jo flere saker som hoper seg opp, desto mer stresset blir du. Når stresset når 100 %, har du møtt veggen.
+                </Introrad>
+              </Stack>
+
+              <Stack gap={4}>
+                <Text fw={700}>Målet</Text>
+                <Text c="dark.4">
+                  Behandle så mange saker som mulig, hold kundene fornøyde, og prøv å komme deg
+                  gjennom arbeidsdagen.
+                </Text>
+              </Stack>
+
+              <Text fw={700} ta="center">
+                Lykke til. Innboksen venter allerede. 📥😈
               </Text>
-              <Button size="lg" color="teal" onClick={nyDag} leftSection={<IconClockPlay size={20} />}>
+
+              <Button
+                size="lg"
+                color="teal"
+                onClick={nyDag}
+                leftSection={<IconClockPlay size={20} />}
+                style={{ alignSelf: 'center' }}
+              >
                 Stemple inn
               </Button>
             </Stack>
@@ -253,5 +284,18 @@ export function Skadeko() {
         </Notification>
       )}
     </Box>
+  );
+}
+
+function Introrad({ tittel, children }: { tittel: string; children: React.ReactNode }) {
+  return (
+    <Paper p="sm" radius="md" bg="gray.0" withBorder>
+      <Text fw={700} fz="sm">
+        {tittel}
+      </Text>
+      <Text fz="sm" c="dark.4">
+        {children}
+      </Text>
+    </Paper>
   );
 }
