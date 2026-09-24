@@ -25,7 +25,7 @@ const COMBO_PER_STEG = 5;
  * Level 10 nås etter 100 sekunder; etter det blir det fortsatt verre.
  *
  *   aktiv tid        0 s    25 s   50 s   75 s   100 s  (level 10)
- *   ny sak hvert     6 s   4,2 s  3,2 s  2,6 s  2,2 s
+ *   ny sak hvert   4,5 s   3,6 s  3,0 s  2,5 s  2,2 s
  *   tid per sak     36 s    23 s   17 s   14 s   11 s  (× kategoriens tålmodighet)
  */
 export const MAKS_LEVEL = 10;
@@ -35,7 +35,7 @@ const TID_TIL_MAKS_LEVEL_MS = 100 * 1000;
 const framdrift = (aktivMs: number) => aktivMs / TID_TIL_MAKS_LEVEL_MS;
 
 const spawnIntervall = (aktivMs: number) =>
-  Math.max(1200, 6000 / (1 + 1.73 * framdrift(aktivMs)));
+  Math.max(1200, 4500 / (1 + 1.05 * framdrift(aktivMs)));
 
 const grunnVarighet = (aktivMs: number) =>
   Math.max(6000, 36000 / (1 + 2.2 * framdrift(aktivMs)));
