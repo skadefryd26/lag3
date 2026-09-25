@@ -1,10 +1,20 @@
 import { useCallback, useState } from 'react';
+import { VANSKELIGHETSGRADER, erGrad, type VanskelighetsgradId } from '../data/vanskelighetsgrader';
 
 export type Highscore = {
   navn: string;
   poeng: number;
   dato: string;
+  /** Eldre oppføringer mangler grad; de regnes som Senior, som var tempoet da. */
+  grad?: VanskelighetsgradId;
 };
+
+/** Hvilken grad en oppføring hører til. */
+export const gradFor = (h: Highscore): VanskelighetsgradId => (erGrad(h.grad) ? h.grad : 'senior');
+
+/** Topp 10 for én grad, best først. */
+const toppFor = (liste: Highscore[], grad: VanskelighetsgradId) =>
+  liste.filter((h) => gradFor(h) === grad).sort((a, b) => b.poeng - a.poeng).slice(0, ANTALL_PLASSER);
 
 /** Det som ligger lagret: lista og når inneværende periode startet. */
 type Lagret = {
@@ -43,28 +53,32 @@ function les(): Lagret {
   }
 }
 
-/** Topp 10, lagret i nettleseren på denne maskinen. Nullstilles hver 7. dag. */
+/**
+ * Topp 10 per vanskelighetsgrad, lagret i nettleseren på denne maskinen.
+ * Nullstilles hver 7. dag.
+ */
 export function useHighscores() {
   const [data, setData] = useState<Lagret>(les);
   const liste = data.liste;
 
-  /** Kommer poengsummen inn på lista? Er lista ikke full, holder det med mer enn 0. */
+  /** Kommer poengsummen inn på lista for graden? Er lista ikke full, holder det med mer enn 0. */
   const kvalifiserer = useCallback(
-    (poeng: number) => {
+    (poeng: number, grad: VanskelighetsgradId) => {
       if (poeng <= 0) return false;
-      const naa = les().liste;
+      const naa = toppFor(les().liste, grad);
       if (naa.length < ANTALL_PLASSER) return true;
       return poeng > naa[naa.length - 1].poeng;
     },
     [liste],
   );
 
-  const leggTil = useCallback((navn: string, poeng: number) => {
+  const leggTil = useCallback((navn: string, poeng: number, grad: VanskelighetsgradId) => {
     const naa = les();
-    const ny: Highscore = { navn: navn.trim().slice(0, 24), poeng, dato: new Date().toISOString() };
+    const ny: Highscore = { navn: navn.trim().slice(0, 24), poeng, dato: new Date().toISOString(), grad };
+    const alle = [...naa.liste, ny];
     const oppdatert: Lagret = {
       periodeStart: naa.periodeStart,
-      liste: [...naa.liste, ny].sort((a, b) => b.poeng - a.poeng).slice(0, ANTALL_PLASSER),
+      liste: VANSKELIGHETSGRADER.flatMap((g) => toppFor(alle, g.id)),
     };
     localStorage.setItem(NOKKEL, JSON.stringify(oppdatert));
     setData(oppdatert);
@@ -75,5 +89,8 @@ export function useHighscores() {
 
   const nullstillesPa = new Date(Date.parse(data.periodeStart) + PERIODE_MS);
 
-  return { liste, kvalifiserer, leggTil, oppdater, nullstillesPa };
+  /** Topp 10 for én grad. */
+  const listeFor = useCallback((grad: VanskelighetsgradId) => toppFor(liste, grad), [liste]);
+
+  return { listeFor, kvalifiserer, leggTil, oppdater, nullstillesPa };
 }

@@ -2,6 +2,7 @@ import { Alert, Blockquote, Button, Group, Paper, Stack, Text } from '@mantine/c
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hentMedarbeidersamtale } from '../api/medarbeidersamtale.api';
+import { GRAD_ETTER_ID } from '../data/vanskelighetsgrader';
 import type { Dagsresultat } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
 
@@ -10,10 +11,12 @@ type Props = {
   onNyDag: () => void;
   /** Navne-innmelding til highscore-lista, når poengsummen er god nok. */
   highscore?: ReactNode;
+  /** Lar spilleren bytte stilling før neste arbeidsdag. */
+  gradvelger?: ReactNode;
 };
 
 /** Bjarne leser dagsrapporten og er uimponert. Ett kall til AI-gatewayen. */
-export function Medarbeidersamtale({ resultat, onNyDag, highscore }: Props) {
+export function Medarbeidersamtale({ resultat, onNyDag, highscore, gradvelger }: Props) {
   const { data, error, isPending, isError, refetch, isFetching } = useQuery({
     // Ny arbeidsdag = ny samtale. Tallene er nøkkelen.
     queryKey: ['medarbeidersamtale', resultat],
@@ -49,6 +52,7 @@ export function Medarbeidersamtale({ resultat, onNyDag, highscore }: Props) {
           <Nokkeltall etikett="Poeng" verdi={String(resultat.poeng)} />
           <Nokkeltall etikett="Tapte kunder" verdi={String(resultat.tapt)} />
           <Nokkeltall etikett="Tittel" verdi={resultat.tittel} />
+          <Nokkeltall etikett="Stilling" verdi={GRAD_ETTER_ID[resultat.vanskelighetsgrad].navn} />
         </Group>
 
         {isPending || isFetching ? (
@@ -66,6 +70,8 @@ export function Medarbeidersamtale({ resultat, onNyDag, highscore }: Props) {
         )}
 
         {highscore}
+
+        {gradvelger}
 
         <Group>
           <Button size="md" onClick={onNyDag} color="teal">

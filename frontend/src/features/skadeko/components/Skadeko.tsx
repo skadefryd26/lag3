@@ -1,6 +1,7 @@
 import { IconCircleFilled, IconClockPlay, IconFlame } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
+import { GradVelger } from './GradVelger';
 import { Highscores, HighscoreInnmelding } from './Highscores';
 import { Sidemeny } from './Sidemeny';
 import { useHighscores } from '../hooks/useHighscores';
@@ -13,10 +14,23 @@ import { TiltakModal } from './tiltak/TiltakModal';
 import { TommingModal } from './tiltak/TommingModal';
 import { MAALERE, MAALER_ETTER_ID, iKrise } from '../data/maalere';
 import { useMaalere } from '../hooks/useMaalere';
-import { MAKS_LEVEL, useSkadeko } from '../hooks/useSkadeko';
+import { GRAD_ETTER_ID, STANDARD_GRAD, erGrad, type VanskelighetsgradId } from '../data/vanskelighetsgrader';
+import { useSkadeko } from '../hooks/useSkadeko';
 import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
 import type { MaalerId, TiltakResultat } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
+
+const GRAD_NOKKEL = 'skadeko-vanskelighetsgrad';
+
+/** Husker sist valgte grad på denne maskinen. */
+function lesGrad(): VanskelighetsgradId {
+  try {
+    const lagret = localStorage.getItem(GRAD_NOKKEL);
+    return erGrad(lagret) ? lagret : STANDARD_GRAD;
+  } catch {
+    return STANDARD_GRAD;
+  }
+}
 
 export function Skadeko() {
   const spill = useSkadeko();
@@ -28,6 +42,15 @@ export function Skadeko() {
   const [visMeny, setVisMeny] = useState(false);
   const [aktivtTiltak, setAktivtTiltak] = useState<MaalerId | null>(null);
   const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
+  const [grad, setGradState] = useState<VanskelighetsgradId>(lesGrad);
+  const setGrad = useCallback((ny: VanskelighetsgradId) => {
+    setGradState(ny);
+    try {
+      localStorage.setItem(GRAD_NOKKEL, ny);
+    } catch {
+      // Uten lagring husker vi bare valget til siden lastes på nytt.
+    }
+  }, []);
 
   const { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming } = useMaalere(vedSkrivebordet);
 
@@ -84,18 +107,12 @@ export function Skadeko() {
   );
 
   /** Alt som må nullstilles når en ny arbeidsdag begynner. */
-  const startDag = useCallback(
-    (level?: number) => {
-      setAktivtTiltak(null);
-      setTiltakskvittering(null);
-      nullstill();
-      spill.startDagen(level);
-    },
-    [nullstill, spill],
-  );
-  const nyDag = useCallback(() => startDag(), [startDag]);
-  /** Til testing og demo: hopp rett til det vanskeligste levelet. */
-  const testMaksLevel = useCallback(() => startDag(MAKS_LEVEL), [startDag]);
+  const nyDag = useCallback(() => {
+    setAktivtTiltak(null);
+    setTiltakskvittering(null);
+    nullstill();
+    spill.startDagen(grad);
+  }, [nullstill, spill, grad]);
 
   return (
     <Box mih="100vh" bg="#f1f3f5">
@@ -166,6 +183,11 @@ export function Skadeko() {
                 </Text>
               </Stack>
 
+              <Stack gap={6}>
+                <Text fw={700}>Velg stilling</Text>
+                <GradVelger verdi={grad} onEndre={setGrad} />
+              </Stack>
+
               <Text fw={700} ta="center">
                 Lykke til. Innboksen venter allerede. 📥😈
               </Text>
@@ -179,15 +201,6 @@ export function Skadeko() {
               >
                 Stemple inn
               </Button>
-              <Button
-                variant="subtle"
-                color="gray"
-                size="xs"
-                onClick={testMaksLevel}
-                style={{ alignSelf: 'center' }}
-              >
-                Test level {MAKS_LEVEL}
-              </Button>
             </Stack>
           </Paper>
         )}
@@ -196,6 +209,9 @@ export function Skadeko() {
           <Stack gap="sm">
             <Group justify="space-between">
               <Group gap="xs">
+                <Badge color="violet" variant="filled">
+                  {GRAD_ETTER_ID[spill.grad].emoji} {GRAD_ETTER_ID[spill.grad].navn}
+                </Badge>
                 <Badge color="green" variant="light" leftSection={<IconCircleFilled size={8} />}>Enkel · 10p · god tid</Badge>
                 <Badge color="yellow" variant="light" leftSection={<IconCircleFilled size={8} />}>Middels · 20p</Badge>
                 <Badge color="red" variant="light" leftSection={<IconCircleFilled size={8} />}>Kompleks · 30p · kort tid</Badge>
@@ -222,15 +238,16 @@ export function Skadeko() {
           <Medarbeidersamtale
             resultat={spill.resultat}
             onNyDag={nyDag}
+            gradvelger={<GradVelger verdi={grad} onEndre={setGrad} />}
             highscore={
-              highscores.kvalifiserer(spill.resultat.poeng) || lagretNa
+              highscores.kvalifiserer(spill.resultat.poeng, spill.resultat.vanskelighetsgrad) || lagretNa
                 ? (
                     <HighscoreInnmelding
                       key={spill.resultat.sekunderSpilt + '-' + spill.resultat.poeng}
                       poeng={spill.resultat.poeng}
                       onLagre={(navn) => {
                         setLagretNa(true);
-                        highscores.leggTil(navn, spill.resultat!.poeng);
+                        highscores.leggTil(navn, spill.resultat!.poeng, spill.resultat!.vanskelighetsgrad);
                       }}
                     />
                   )
@@ -243,7 +260,8 @@ export function Skadeko() {
       <Highscores
         apen={visHighscores}
         onLukk={() => setVisHighscores(false)}
-        liste={highscores.liste}
+        listeFor={highscores.listeFor}
+        startGrad={spill.resultat?.vanskelighetsgrad ?? grad}
         nullstillesPa={highscores.nullstillesPa}
       />
 
