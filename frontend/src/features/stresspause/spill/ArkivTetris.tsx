@@ -6,6 +6,7 @@ import { useFerdig } from '../lib/useFerdig';
 import { SPILLTID_SEKUNDER } from '../lib/stress';
 import { useNedtelling } from '../lib/useNedtelling';
 import type { MiniSpillProps } from '../types/stresspause.types';
+import { useSprak } from '../../../sprak';
 import classes from './spill.module.css';
 
 /** Smalt arkiv: seks kolonner gjør det mye lettere å fylle hele rader. */
@@ -29,6 +30,7 @@ const FORMER: Form[] = [
 ];
 const FARGER = ['#38bdf8', '#fbbf24', '#a78bfa', '#60a5fa', '#fb923c', '#4ade80', '#f87171'];
 const MERKELAPPER = ['Bil', 'Hus', 'Reise', 'Innbo', 'Båt', 'Dyr', 'Ting'];
+const MERKELAPPER_EN = ['Car', 'Home', 'Travel', 'Contents', 'Boat', 'Pet', 'Stuff'];
 
 type Brett = (number | null)[][];
 
@@ -145,6 +147,7 @@ function start(): Tilstand {
 const score = (s: Tilstand) => (s.linjer + s.brikker / 10) / MÅL;
 
 export function ArkivTetris({ onFerdig }: MiniSpillProps) {
+  const { t } = useSprak();
   const ferdig = useFerdig(onFerdig);
   const [s, send] = useReducer(redusér, undefined, start);
   const sRef = useRef(s);
@@ -207,7 +210,7 @@ export function ArkivTetris({ onFerdig }: MiniSpillProps) {
     <SpillRamme
       igjen={igjen}
       total={SEKUNDER}
-      status={`Arkiverte linjer: ${s.linjer} · Effekt: ${Math.min(100, Math.round(score(s) * 100))} %`}
+      status={`${t('Arkiverte linjer', 'Archived rows')}: ${s.linjer} · ${t('Effekt', 'Effect')}: ${Math.min(100, Math.round(score(s) * 100))} %`}
     >
       <div className={classes.tetrisRad}>
         <div className={classes.tetrisBrett} style={{ gridTemplateColumns: `repeat(${BREDDE}, 1fr)`, width: `min(${BREDDE * 30}px, 70vw)` }}>
@@ -222,13 +225,13 @@ export function ArkivTetris({ onFerdig }: MiniSpillProps) {
           {makulertNå && (
             <div key={s.sisteHendelse?.id} className={classes.makulert}>
               🤖🗑️<br />
-              «Arkivet var fullt. Jeg makulerte alt.<br />Ingen kommer til å merke det.»
+              {t('«Arkivet var fullt. Jeg makulerte alt.', '“The archive was full. I shredded everything.')}<br />{t('Ingen kommer til å merke det.»', 'Nobody is going to notice.”')}
             </div>
           )}
         </div>
         <div className={classes.tetrisSide}>
           <div className={classes.nesteBoks}>
-            <div className={classes.nesteTittel}>Neste mappe</div>
+            <div className={classes.nesteTittel}>{t('Neste mappe', 'Next folder')}</div>
             <div
               className={classes.nesteForm}
               style={{ gridTemplateColumns: `repeat(${FORMER[s.neste][0].length}, 18px)` }}
@@ -237,9 +240,9 @@ export function ArkivTetris({ onFerdig }: MiniSpillProps) {
                 <div key={i} style={{ width: 18, height: 18, borderRadius: 3, background: c ? FARGER[s.neste] : 'transparent' }} />
               ))}
             </div>
-            <div className={classes.nesteTittel}>{MERKELAPPER[s.neste]}skader</div>
+            <div className={classes.nesteTittel}>{t(`${MERKELAPPER[s.neste]}skader`, `${MERKELAPPER_EN[s.neste]} claims`)}</div>
           </div>
-          <div className={classes.nesteTittel}>Makulert: {s.makulert} 🗑️</div>
+          <div className={classes.nesteTittel}>{t('Makulert', 'Shredded')}: {s.makulert} 🗑️</div>
           <Group gap={6} mt="sm">
             <Button size="xs" variant="light" onClick={() => send({ type: 'venstre' })}>←</Button>
             <Button size="xs" variant="light" onClick={() => send({ type: 'roter' })}>⟳</Button>
@@ -247,11 +250,11 @@ export function ArkivTetris({ onFerdig }: MiniSpillProps) {
           </Group>
           <Group gap={6} mt={6}>
             <Button size="xs" variant="light" onClick={() => send({ type: 'ned' })}>↓</Button>
-            <Button size="xs" variant="light" color="teal" onClick={() => send({ type: 'slipp' })}>Slipp</Button>
+            <Button size="xs" variant="light" color="teal" onClick={() => send({ type: 'slipp' })}>{t('Slipp', 'Drop')}</Button>
           </Group>
         </div>
       </div>
-      <p className={classes.hint}>← → flytt · ↑ roter · ↓ raskere · mellomrom slipp. Fullt arkiv? Bjarne makulerer. Du kan ikke tape.</p>
+      <p className={classes.hint}>{t('← → flytt · ↑ roter · ↓ raskere · mellomrom slipp. Fullt arkiv? Bjarne makulerer. Du kan ikke tape.', '← → move · ↑ rotate · ↓ faster · space drop. Archive full? Bjarne shreds. You can\'t lose.')}</p>
     </SpillRamme>
   );
 }

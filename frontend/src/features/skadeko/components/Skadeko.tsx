@@ -4,6 +4,7 @@ import { Badge, Box, Button, Container, Group, Modal, Notification, Paper, Stack
 import { GradVelger } from './GradVelger';
 import { Highscores, HighscoreInnmelding } from './Highscores';
 import { Sidemeny } from './Sidemeny';
+import { Butikk } from './Butikk';
 import { useHighscores } from '../hooks/useHighscores';
 import { Hud } from './Hud';
 import { Medarbeidersamtale } from './Medarbeidersamtale';
@@ -19,6 +20,7 @@ import { useSkadeko } from '../hooks/useSkadeko';
 import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
 import type { MaalerId, TiltakResultat } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
+import { useSprak } from '../../../sprak';
 
 const GRAD_NOKKEL = 'skadeko-vanskelighetsgrad';
 
@@ -34,12 +36,18 @@ function lesGrad(): VanskelighetsgradId {
 
 export function Skadeko() {
   const spill = useSkadeko();
+  const { t } = useSprak();
   // Alt som skjer «ved skrivebordet» står stille mens et tiltak er åpent.
   const vedSkrivebordet = spill.tilstand === 'spiller' && !spill.pauset;
-  const teams = useTeamsForstyrrelser(vedSkrivebordet);
+  /** Butikkvarer kjøpt i dag — de blir aktive først neste arbeidsdag. */
+  const [kjopt, setKjopt] = useState<string[]>([]);
+  /** Varer som virker i dagens arbeidsdag (kjøpt dagen før). */
+  const [aktive, setAktive] = useState<string[]>([]);
+  const teams = useTeamsForstyrrelser(vedSkrivebordet, aktive.includes('hodetelefoner') ? 0.5 : 1);
   const highscores = useHighscores();
   const [visHighscores, setVisHighscores] = useState(false);
   const [visMeny, setVisMeny] = useState(false);
+  const [visButikk, setVisButikk] = useState(false);
   const [aktivtTiltak, setAktivtTiltak] = useState<MaalerId | null>(null);
   const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
   const [grad, setGradState] = useState<VanskelighetsgradId>(lesGrad);
@@ -52,7 +60,7 @@ export function Skadeko() {
     }
   }, []);
 
-  const { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming } = useMaalere(vedSkrivebordet);
+  const { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming, settDriftFaktor } = useMaalere(vedSkrivebordet);
 
   // Do-turen er over (tom blære eller avbrutt): køen går videre.
   const varBorte = useRef(false);
@@ -69,8 +77,8 @@ export function Skadeko() {
   const { tapDagen } = spill;
   const krise = spill.tilstand === 'spiller' ? MAALERE.find((m) => iKrise(m, maalere[m.id])) : undefined;
   useEffect(() => {
-    if (krise) tapDagen(krise.krisetekst);
-  }, [krise, tapDagen]);
+    if (krise) tapDagen(t(krise.krisetekst, krise.krisetekstEn));
+  }, [krise, tapDagen, t]);
 
   // Holder innmeldingen synlig (med «du er på lista») etter at navnet er lagret.
   const [lagretNa, setLagretNa] = useState(false);
@@ -113,9 +121,15 @@ export function Skadeko() {
   const nyDag = useCallback(() => {
     setAktivtTiltak(null);
     setTiltakskvittering(null);
+    // Det som ble kjøpt i går, virker i dag.
     nullstill();
+    if (kjopt.includes('kaffe')) settDriftFaktor('energi', 0.5);
+    if (kjopt.includes('stressball')) settDriftFaktor('stress', 0.5);
+    if (kjopt.includes('blaerekapasitet')) settDriftFaktor('blaere', 0.5);
+    setAktive(kjopt);
+    setKjopt([]);
     spill.startDagen(grad);
-  }, [nullstill, spill, grad]);
+  }, [nullstill, settDriftFaktor, kjopt, spill, grad]);
 
   /** Tilbake til startsiden. Midt i en dag spør vi først, og køen står stille imens. */
   const [bekreftUt, setBekreftUt] = useState<{ pausetAvOss: boolean } | null>(null);
@@ -128,7 +142,7 @@ export function Skadeko() {
   }, [nullstill, spill]);
   const spoerOmUt = useCallback(() => {
     if (spill.tilstand !== 'spiller') return tilStart();
-    const pausetAvOss = !spill.pauset;
+    const pausetAvOss = !spill.erPauset();
     if (pausetAvOss) spill.pause();
     setBekreftUt({ pausetAvOss });
   }, [spill, tilStart]);
@@ -137,8 +151,26 @@ export function Skadeko() {
     setBekreftUt(null);
   }, [bekreftUt, spill]);
 
+  // Sidemenyen dekker pulten, så køen står stille mens den er åpen.
+  // Vi gjenopptar bare en pause menyen selv satte.
+  const menyPauset = useRef(false);
+  const apneMeny = useCallback(() => {
+    if (spill.tilstand === 'spiller' && !spill.erPauset()) {
+      spill.pause();
+      menyPauset.current = true;
+    }
+    setVisMeny(true);
+  }, [spill]);
+  const lukkMeny = useCallback(() => {
+    setVisMeny(false);
+    if (menyPauset.current) {
+      menyPauset.current = false;
+      spill.fortsett();
+    }
+  }, [spill]);
+
   return (
-    <Box mih="100vh" bg="#f1f3f5">
+    <Box mih="100vh" bg="light-dark(#f1f3f5, var(--mantine-color-dark-7))">
       <Box
         px="lg"
         py="sm"
@@ -162,57 +194,62 @@ export function Skadeko() {
             tommes={tommes}
             onTiltak={spill.tilstand === 'spiller' ? apneTiltak : null}
             menyApen={visMeny}
-            onMeny={() => setVisMeny((v) => !v)}
+            onMeny={() => (visMeny ? lukkMeny() : apneMeny())}
           />
         </Container>
       </Box>
 
       <Container size="lg" py="xl">
         {spill.tilstand === 'ikke-startet' && (
-          <Paper radius="lg" p="xl" shadow="sm" maw={600} mx="auto" bg="white">
+          <Paper radius="lg" p="xl" shadow="sm" maw={600} mx="auto">
             <Stack gap="md">
               <Stack gap="xs" align="center" ta="center">
-                <Title order={2}>Velkommen til Skadekø!</Title>
-                <Text c="dark.4">
-                  Du er skadebehandler, og innboksen fylles raskere enn du rekker å svare. Din jobb
-                  er å holde hodet kaldt.
+                <Title order={2}>{t('Velkommen til Skadekø!', 'Welcome to Skadekø!')}</Title>
+                <Text c="dimmed">
+                  {t(
+                    'Du er skadebehandler, og innboksen fylles raskere enn du rekker å svare. Din jobb er å holde hodet kaldt.',
+                    'You are a claims handler, and the inbox fills up faster than you can reply. Your job is to keep a cool head.',
+                  )}
                 </Text>
               </Stack>
 
-              <Text c="dark.4">
-                For hver sak må du velge riktig svar før kundens tålmodighet renner ut. Riktige svar
-                gir poeng og fornøyde kunder. Feil svar eller lang ventetid skaper misnøye og øker
-                presset.
+              <Text c="dimmed">
+                {t(
+                  'For hver sak må du velge riktig svar før kundens tålmodighet renner ut. Riktige svar gir poeng og fornøyde kunder. Feil svar eller lang ventetid skaper misnøye og øker presset.',
+                  'For each claim you must pick the right answer before the customer runs out of patience. Right answers earn points and happy customers. Wrong answers or long waits cause frustration and pile on the pressure.',
+                )}
               </Text>
 
               <Stack gap={8}>
-                <Text fw={700}>Men kundene er ikke den eneste utfordringen. Du må også holde styr på:</Text>
-                <Introrad tittel={`${MAALER_ETTER_ID.energi.emoji} Energi`}>
-                  Drikk kaffe for å hente inn energi. Hvis energien når 0 %, er du tom for krefter.
+                <Text fw={700}>{t('Men kundene er ikke den eneste utfordringen. Du må også holde styr på:', 'But the customers are not your only challenge. You also have to keep track of:')}</Text>
+                <Introrad tittel={`${MAALER_ETTER_ID.energi.emoji} ${t('Energi', 'Energy')}`}>
+                  {t('Drikk kaffe for å hente inn energi. Hvis energien når 0 %, er du tom for krefter.', 'Drink coffee to recharge. If your energy hits 0%, you go to sleep.')}
                 </Introrad>
-                <Introrad tittel={`${MAALER_ETTER_ID.blaere.emoji} Blære`}>
-                  Kaffe har en pris. Husk toalettpauser før blæren når 100 %.
+                <Introrad tittel={`${MAALER_ETTER_ID.blaere.emoji} ${t('Blære', 'Bladder')}`}>
+                  {t('Kaffe har en pris. Husk toalettpauser før blæren når 100 %.', 'Coffee comes at a price. Remember bathroom breaks before your bladder hits 100 %.')}
                 </Introrad>
                 <Introrad tittel={`${MAALER_ETTER_ID.stress.emoji} Stress`}>
-                  Jo flere saker som hoper seg opp, desto mer stresset blir du. Når stresset når 100 %, har du møtt veggen.
+                  {t('Jo flere saker som hoper seg opp, desto mer stresset blir du. Når stresset når 100 %, har du møtt veggen.', 'The more claims pile up, the more stressed you get. When stress hits 100%, you deliver the resignation letter.')}
                 </Introrad>
               </Stack>
 
               <Stack gap={4}>
-                <Text fw={700}>Målet</Text>
-                <Text c="dark.4">
-                  Behandle så mange saker som mulig, hold kundene fornøyde, og prøv å komme deg
-                  gjennom arbeidsdagen.
+                <Text fw={700}>{t('Målet', 'The goal')}</Text>
+                <Text c="dimmed">
+                  {t(
+                    'Behandle så mange saker som mulig, hold kundene fornøyde, og prøv å komme deg gjennom arbeidsdagen.',
+                    'Handle as many claims as you can, keep the customers happy, and try to make it through the working day.',
+                  )}
                 </Text>
               </Stack>
 
               <Stack gap={6}>
-                <Text fw={700}>Velg stilling</Text>
+                <Text fw={700}>{t('Velg stilling', 'Choose your position')}</Text>
                 <GradVelger verdi={grad} onEndre={setGrad} />
               </Stack>
 
               <Text fw={700} ta="center">
-                Lykke til. Innboksen venter allerede.
+                {t('Lykke til. Innboksen venter allerede. 📥😈', 'Good luck. The inbox is already waiting. 📥😈')}
               </Text>
 
               <Button
@@ -222,7 +259,7 @@ export function Skadeko() {
                 leftSection={<IconClockPlay size={20} />}
                 style={{ alignSelf: 'center' }}
               >
-                Stemple inn
+                {t('Stemple inn', 'Clock in')}
               </Button>
             </Stack>
           </Paper>
@@ -235,9 +272,9 @@ export function Skadeko() {
                 <Badge color="violet" variant="filled">
                   {GRAD_ETTER_ID[spill.grad].emoji} {GRAD_ETTER_ID[spill.grad].navn}
                 </Badge>
-                <Badge color="green" variant="light" leftSection={<IconCircleFilled size={8} />}>Enkel · 10p · god tid</Badge>
-                <Badge color="yellow" variant="light" leftSection={<IconCircleFilled size={8} />}>Middels · 20p</Badge>
-                <Badge color="red" variant="light" leftSection={<IconCircleFilled size={8} />}>Kompleks · 30p · kort tid</Badge>
+                <Badge color="green" variant="light" leftSection={<IconCircleFilled size={8} />}>{t('Enkel · 10p · god tid', 'Easy · 10p · plenty of time')}</Badge>
+                <Badge color="yellow" variant="light" leftSection={<IconCircleFilled size={8} />}>{t('Middels · 20p', 'Medium · 20p')}</Badge>
+                <Badge color="red" variant="light" leftSection={<IconCircleFilled size={8} />}>{t('Kompleks · 30p · kort tid', 'Complex · 30p · short time')}</Badge>
               </Group>
               <Group gap="xs">
                 {spill.combo >= 2 && (
@@ -251,13 +288,13 @@ export function Skadeko() {
                   leftSection={<IconDoorExit size={16} />}
                   onClick={spoerOmUt}
                 >
-                  Stemple ut
+                  {t('Stemple ut', 'Clock out')}
                 </Button>
               </Group>
             </Group>
             <div className={classes.skrivebord} aria-live="polite">
               {spill.saker.length === 0 ? (
-                <Text className={classes.tomt}>Skrivebordet er tomt. Nyt det mens det varer.</Text>
+                <Text className={classes.tomt}>{t('Skrivebordet er tomt. Nyt det mens det varer.', 'Your desk is empty. Enjoy it while it lasts.')}</Text>
               ) : (
                 spill.saker.map((sak) => (
                   <SakKort key={sak.id} sak={sak} onApne={spill.apneSak} />
@@ -271,6 +308,8 @@ export function Skadeko() {
           <Medarbeidersamtale
             resultat={spill.resultat}
             onNyDag={nyDag}
+            onVisButikk={() => setVisButikk(true)}
+            sjef={aktive.includes('forfremmelse')}
             onTilStart={tilStart}
             gradvelger={<GradVelger verdi={grad} onEndre={setGrad} />}
             highscore={
@@ -303,33 +342,59 @@ export function Skadeko() {
 
       <Sidemeny
         apen={visMeny}
-        onLukk={() => setVisMeny(false)}
+        onLukk={lukkMeny}
         onNyDag={nyDag}
         onTilStart={spoerOmUt}
         onVisHighscores={() => {
           highscores.oppdater();
           setVisHighscores(true);
         }}
+        onVisButikk={() => {
+          spill.pause();
+          setVisButikk(true);
+        }}
+      />
+
+      <Butikk
+        apen={visButikk}
+        poeng={spill.poeng}
+        onLukk={() => {
+          setVisButikk(false);
+          spill.fortsett();
+        }}
+        onKjop={(vare) => {
+          if (kjopt.includes(vare.id) || !spill.brukPoeng(vare.pris)) return;
+          setKjopt((k) => [...k, vare.id]);
+          setTiltakskvittering(
+            t(
+              `Kjøpt: ${vare.emoji} ${vare.navn} — aktiv fra neste arbeidsdag`,
+              `Bought: ${vare.emoji} ${vare.navnEn} — active from the next working day`,
+            ),
+          );
+        }}
+        eide={kjopt}
       />
 
       <Modal
         opened={bekreftUt !== null}
         onClose={bliVedPulten}
-        title="Stemple ut før dagen er over?"
+        title={t('Stemple ut før dagen er over?', 'Clock out before the day is over?')}
         centered
         radius="lg"
       >
         <Stack gap="md">
           <Text>
-            Dagen blir ikke lagret, og du kommer ikke på poengtavla. Bjarne kommer til å legge merke
-            til at pulten er tom.
+            {t(
+              'Dagen blir ikke lagret, og du kommer ikke på poengtavla. Bjarne kommer til å legge merke til at pulten er tom.',
+              'The day will not be saved, and you will not make the leaderboard. Bjarne will notice the empty desk.',
+            )}
           </Text>
           <Group justify="flex-end">
             <Button variant="default" onClick={bliVedPulten}>
-              Bli ved pulten
+              {t('Bli ved pulten', 'Stay at the desk')}
             </Button>
             <Button color="red" leftSection={<IconDoorExit size={16} />} onClick={tilStart}>
-              Gå til startsiden
+              {t('Gå til startsiden', 'Go to start page')}
             </Button>
           </Group>
         </Stack>
@@ -398,11 +463,11 @@ export function Skadeko() {
 
 function Introrad({ tittel, children }: { tittel: string; children: React.ReactNode }) {
   return (
-    <Paper p="sm" radius="md" bg="gray.0" withBorder>
+    <Paper p="sm" radius="md" bg="light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))" withBorder>
       <Text fw={700} fz="sm">
         {tittel}
       </Text>
-      <Text fz="sm" c="dark.4">
+      <Text fz="sm" c="dimmed">
         {children}
       </Text>
     </Paper>

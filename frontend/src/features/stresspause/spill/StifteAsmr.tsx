@@ -3,6 +3,7 @@ import { SpillRamme } from '../components/SpillRamme';
 import { lyd } from '../lib/lyd';
 import { useFerdig } from '../lib/useFerdig';
 import type { MiniSpillProps } from '../types/stresspause.types';
+import { tekst, useSprak } from '../../../sprak';
 import classes from './spill.module.css';
 
 const TAKT_MS = 600;
@@ -38,13 +39,14 @@ function lagSlag(): { tider: number[]; tempo: { fra: number; ms: number }[] } {
 type Dom = { tekst: string; farge: string };
 
 function vurder(avvik: number): { poeng: number; dom: Dom } | null {
-  if (avvik < 60) return { poeng: 1, dom: { tekst: 'PERFEKT KA-CHUNK', farge: '#5eead4' } };
-  if (avvik < 120) return { poeng: 0.7, dom: { tekst: 'Fin stift', farge: '#a3e635' } };
-  if (avvik < 200) return { poeng: 0.35, dom: { tekst: 'Litt skjev', farge: '#fbbf24' } };
+  if (avvik < 60) return { poeng: 1, dom: { tekst: tekst('PERFEKT KA-CHUNK', 'PERFECT KA-CHUNK'), farge: '#5eead4' } };
+  if (avvik < 120) return { poeng: 0.7, dom: { tekst: tekst('Fin stift', 'Nice staple'), farge: '#a3e635' } };
+  if (avvik < 200) return { poeng: 0.35, dom: { tekst: tekst('Litt skjev', 'Bit crooked'), farge: '#fbbf24' } };
   return null;
 }
 
 export function StifteAsmr({ onFerdig }: MiniSpillProps) {
+  const { t } = useSprak();
   const ferdig = useFerdig(onFerdig);
   const { tider, tempo } = useMemo(lagSlag, []);
   const antallSlag = tider.length;
@@ -103,7 +105,7 @@ export function StifteAsmr({ onFerdig }: MiniSpillProps) {
       setDom(res.dom);
       if (poengRef.current >= antallSlag) setTimeout(() => ferdig(1), 600);
     } else {
-      setDom({ tekst: 'Stiftet luft', farge: '#94a3b8' });
+      setDom({ tekst: tekst('Stiftet luft', 'Stapled thin air'), farge: '#94a3b8' });
     }
   }, [antallSlag, tider, ferdig]);
 
@@ -125,12 +127,12 @@ export function StifteAsmr({ onFerdig }: MiniSpillProps) {
   const tempoMelding =
     aktivtTempo && forrigeTempo && nå < aktivtTempo.fra + 600
       ? aktivtTempo.ms < forrigeTempo.ms
-        ? 'Tempo opp! ⏩'
-        : 'Roligere… 🐢'
+        ? t('Tempo opp! ⏩', 'Speed up! ⏩')
+        : t('Roligere… 🐢', 'Slower… 🐢')
       : null;
 
   return (
-    <SpillRamme igjen={igjen} total={totalMs / 1000} status={`Stifter: ${Math.round((poeng / antallSlag) * 100)} % rytme`}>
+    <SpillRamme igjen={igjen} total={totalMs / 1000} status={t(`Stifter: ${Math.round((poeng / antallSlag) * 100)} % rytme`, `Stapler: ${Math.round((poeng / antallSlag) * 100)} % rhythm`)}>
       <div className={classes.spor}>
         <div className={classes.treffstrek} />
         {Array.from({ length: antallSlag }, (_, i) => {
@@ -152,12 +154,12 @@ export function StifteAsmr({ onFerdig }: MiniSpillProps) {
       </div>
 
       <div className={classes.stifteRad}>
-        <div className={classes.bunke} aria-label={`${bunke} stiftede ark`}>
+        <div className={classes.bunke} aria-label={t(`${bunke} stiftede ark`, `${bunke} stapled sheets`)}>
           {Array.from({ length: bunke }, (_, i) => (
             <div key={i} className={classes.ark} style={{ transform: `rotate(${((i * 37) % 7) - 3}deg)` }} />
           ))}
         </div>
-        <button type="button" className={classes.stifter} data-trykket={trykket || undefined} onPointerDown={stift}>
+        <button type="button" className={classes.stifter} data-trykket={trykket || undefined} onPointerDown={stift} aria-label={t('Stiftemaskin', 'Stapler')}>
           <span className={classes.stifterTopp} />
           <span className={classes.stifterBunn} />
         </button>
@@ -165,7 +167,7 @@ export function StifteAsmr({ onFerdig }: MiniSpillProps) {
           {dom?.tekst}
         </div>
       </div>
-      <p className={classes.hint}>Trykk mellomrom (eller stifteren) akkurat når arket treffer streken. Følg med — tempoet skifter.</p>
+      <p className={classes.hint}>{t('Trykk mellomrom (eller stifteren) akkurat når arket treffer streken. Følg med — tempoet skifter.', 'Press space (or the stapler) right when the sheet hits the line. Stay sharp — the tempo changes.')}</p>
     </SpillRamme>
   );
 }

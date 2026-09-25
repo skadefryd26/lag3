@@ -1,5 +1,6 @@
 import { Avatar, Button, CloseButton, Group, Paper, Stack, Text } from '@mantine/core';
 import type { Teamsmelding } from '../hooks/useTeamsForstyrrelser';
+import { useSprak } from '../../../sprak';
 
 type Props = {
   meldinger: Teamsmelding[];
@@ -16,6 +17,7 @@ const initialer = (navn: string) =>
 
 /** Teams-aktige varsler nede til høyre. Ligger over alt annet, også saksdialogen. */
 export function TeamsPopup({ meldinger, onLukk }: Props) {
+  const { t } = useSprak();
   if (meldinger.length === 0) return null;
 
   return (
@@ -27,7 +29,7 @@ export function TeamsPopup({ meldinger, onLukk }: Props) {
       w={320}
       style={{ zIndex: 1000 }}
       role="log"
-      aria-label="Teams-meldinger"
+      aria-label={t('Teams-meldinger', 'Teams messages')}
     >
       {meldinger.map((m) => (
         <Paper
@@ -47,21 +49,21 @@ export function TeamsPopup({ meldinger, onLukk }: Props) {
           <Group justify="space-between" align="flex-start" wrap="nowrap" mb={6}>
             <Group gap="xs" wrap="nowrap">
               <Avatar color={m.avsender.farge} radius="xl" size="md">
-                {initialer(m.avsender.navn)}
+                {initialer(t(m.avsender.navn, m.avsender.navnEn))}
               </Avatar>
               <Stack gap={0}>
                 <Text fz="sm" fw={700}>
-                  {m.avsender.navn}
+                  {t(m.avsender.navn, m.avsender.navnEn)}
                 </Text>
                 <Text fz={11} c="dimmed">
-                  Microsoft Teams · nå
+                  {t('Microsoft Teams · nå', 'Microsoft Teams · now')}
                 </Text>
               </Stack>
             </Group>
-            <CloseButton aria-label="Lukk melding" onClick={() => onLukk(m.id)} />
+            <CloseButton aria-label={t('Lukk melding', 'Close message')} onClick={() => onLukk(m.id)} />
           </Group>
 
-          {m.linjer.map((linje, i) => (
+          {t(m.linjer, m.linjerEn).map((linje, i) => (
             <Text key={i} fz="sm" fw={i > 0 ? 700 : 400} c={i > 0 ? 'red.7' : undefined}>
               {linje}
             </Text>
@@ -69,10 +71,10 @@ export function TeamsPopup({ meldinger, onLukk }: Props) {
 
           <Group gap="xs" mt="sm" grow>
             <Button size="xs" variant="light" color="gray" onClick={() => onLukk(m.id)}>
-              Svar senere
+              {t('Svar senere', 'Reply later')}
             </Button>
             <Button size="xs" color="#6264a7" onClick={() => onLukk(m.id)}>
-              Ja da 🙂
+              {t('Ja da 🙂', 'Sure thing 🙂')}
             </Button>
           </Group>
         </Paper>

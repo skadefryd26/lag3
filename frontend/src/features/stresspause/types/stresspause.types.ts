@@ -13,6 +13,11 @@ export type MiniSpill = {
   kontroller: string;
   /** «Slik spiller du» i én setning, vist før spillet starter. */
   slikSpiller: string;
+  /** Engelske versjoner av tekstene over. */
+  navnEn: string;
+  beskrivelseEn: string;
+  kontrollerEn: string;
+  slikSpillerEn: string;
   /** Spill som hører til en bestemt situasjon i arbeidsdagen, f.eks. kaffepausen. */
   anledning?: 'kaffepause';
   Komponent: ComponentType<MiniSpillProps>;

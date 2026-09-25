@@ -6,29 +6,30 @@ import { useFerdig } from '../lib/useFerdig';
 import { SPILLTID_SEKUNDER } from '../lib/stress';
 import { useNedtelling } from '../lib/useNedtelling';
 import type { MiniSpillProps } from '../types/stresspause.types';
+import { useSprak } from '../../../sprak';
 import classes from './spill.module.css';
 
 type Kurv = 'oppvask' | 'søppel' | 'innboks';
 
-const KURVER: { id: Kurv; emoji: string; navn: string }[] = [
-  { id: 'oppvask', emoji: '🚰', navn: 'Oppvask' },
-  { id: 'søppel', emoji: '🗑️', navn: 'Søppel' },
-  { id: 'innboks', emoji: '📥', navn: 'Innboks' },
+const KURVER: { id: Kurv; emoji: string; navn: string; navnEn: string }[] = [
+  { id: 'oppvask', emoji: '🚰', navn: 'Oppvask', navnEn: 'Dishes' },
+  { id: 'søppel', emoji: '🗑️', navn: 'Søppel', navnEn: 'Trash' },
+  { id: 'innboks', emoji: '📥', navn: 'Innboks', navnEn: 'Inbox' },
 ];
 
-const ROT: { emoji: string; navn: string; kurv: Kurv }[] = [
-  { emoji: '☕', navn: 'Kald kaffe', kurv: 'oppvask' },
-  { emoji: '🥣', navn: 'Yoghurtbeger (tomt?)', kurv: 'oppvask' },
-  { emoji: '🍽️', navn: 'Tallerken fra i går', kurv: 'oppvask' },
-  { emoji: '🥄', navn: 'Skje uten eier', kurv: 'oppvask' },
-  { emoji: '🟨', navn: 'Post-it: «ring Bjarne»', kurv: 'søppel' },
-  { emoji: '🍌', navn: 'Bananskall', kurv: 'søppel' },
-  { emoji: '🧻', navn: 'Brukt serviett', kurv: 'søppel' },
-  { emoji: '🍫', navn: 'Sjokoladepapir', kurv: 'søppel' },
-  { emoji: '📄', navn: 'Skademelding: trampoline', kurv: 'innboks' },
-  { emoji: '📋', navn: 'Takst: vannlekkasje', kurv: 'innboks' },
-  { emoji: '📑', navn: 'Vilkår, side 47', kurv: 'innboks' },
-  { emoji: '✉️', navn: 'Brev fra kunde', kurv: 'innboks' },
+const ROT: { emoji: string; navn: string; navnEn: string; kurv: Kurv }[] = [
+  { emoji: '☕', navn: 'Kald kaffe', navnEn: 'Cold coffee', kurv: 'oppvask' },
+  { emoji: '🥣', navn: 'Yoghurtbeger (tomt?)', navnEn: 'Yoghurt pot (empty?)', kurv: 'oppvask' },
+  { emoji: '🍽️', navn: 'Tallerken fra i går', navnEn: 'Yesterday\'s plate', kurv: 'oppvask' },
+  { emoji: '🥄', navn: 'Skje uten eier', navnEn: 'Ownerless spoon', kurv: 'oppvask' },
+  { emoji: '🟨', navn: 'Post-it: «ring Bjarne»', navnEn: 'Post-it: “call Bjarne”', kurv: 'søppel' },
+  { emoji: '🍌', navn: 'Bananskall', navnEn: 'Banana peel', kurv: 'søppel' },
+  { emoji: '🧻', navn: 'Brukt serviett', navnEn: 'Used napkin', kurv: 'søppel' },
+  { emoji: '🍫', navn: 'Sjokoladepapir', navnEn: 'Chocolate wrapper', kurv: 'søppel' },
+  { emoji: '📄', navn: 'Skademelding: trampoline', navnEn: 'Claim report: trampoline', kurv: 'innboks' },
+  { emoji: '📋', navn: 'Takst: vannlekkasje', navnEn: 'Assessment: water leak', kurv: 'innboks' },
+  { emoji: '📑', navn: 'Vilkår, side 47', navnEn: 'Terms, page 47', kurv: 'innboks' },
+  { emoji: '✉️', navn: 'Brev fra kunde', navnEn: 'Letter from customer', kurv: 'innboks' },
 ];
 
 const SEKUNDER = SPILLTID_SEKUNDER;
@@ -46,6 +47,7 @@ function trekk() {
 }
 
 export function RyddPulten({ onFerdig }: MiniSpillProps) {
+  const { t: tr } = useSprak();
   const ferdig = useFerdig(onFerdig);
   const start = useMemo<Ting[]>(
     () =>
@@ -111,7 +113,7 @@ export function RyddPulten({ onFerdig }: MiniSpillProps) {
   }
 
   return (
-    <SpillRamme igjen={igjen} total={SEKUNDER} status={`Ryddet riktig: ${riktige} / ${ANTALL}`}>
+    <SpillRamme igjen={igjen} total={SEKUNDER} status={`${tr('Ryddet riktig', 'Sorted correctly')}: ${riktige} / ${ANTALL}`}>
       <div className={classes.pult} onPointerMove={pointerMove} onPointerUp={pointerUp}>
         {ting.map((t) => {
           const dras = drag?.id === t.id;
@@ -130,10 +132,10 @@ export function RyddPulten({ onFerdig }: MiniSpillProps) {
                   : `rotate(${t.rot}deg)`,
               }}
               onPointerDown={(e) => pointerDown(e, t.id)}
-              title={t.navn}
+              title={tr(t.navn, t.navnEn)}
             >
               <span className={classes.tingEmoji}>{t.emoji}</span>
-              <span className={classes.tingNavn}>{t.navn}</span>
+              <span className={classes.tingNavn}>{tr(t.navn, t.navnEn)}</span>
             </button>
           );
         })}
@@ -148,12 +150,12 @@ export function RyddPulten({ onFerdig }: MiniSpillProps) {
               onClick={() => valgt !== null && legg(valgt, k.id)}
             >
               <span data-kurv={k.id} style={{ fontSize: 34 }}>{k.emoji}</span>
-              <span data-kurv={k.id}>{k.navn}</span>
+              <span data-kurv={k.id}>{tr(k.navn, k.navnEn)}</span>
             </button>
           ))}
         </div>
       </div>
-      <p className={classes.hint}>Dra tingene til riktig kurv — eller klikk en ting, så en kurv.</p>
+      <p className={classes.hint}>{tr('Dra tingene til riktig kurv — eller klikk en ting, så en kurv.', 'Drag the items to the right basket — or click an item, then a basket.')}</p>
     </SpillRamme>
   );
 }

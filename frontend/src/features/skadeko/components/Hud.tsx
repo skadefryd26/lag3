@@ -3,6 +3,7 @@ import { MenyKnapp } from './Sidemeny';
 import { MAALERE, alvorlighet, erKritisk } from '../data/maalere';
 import type { MaalerId, Maalere } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
+import { useSprak } from '../../../sprak';
 
 type Props = {
   /** Poeng, level og målere vises først når arbeidsdagen er i gang. */
@@ -29,6 +30,7 @@ function levelFarge(level: number) {
 }
 
 export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, onTiltak, menyApen, onMeny }: Props) {
+  const { t } = useSprak();
   return (
     <Group justify="space-between" align="center" wrap="wrap" gap="md">
       <Group gap="sm" wrap="nowrap">
@@ -53,7 +55,7 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
             Skadekø
           </Title>
           <Text fz={11} c="rgba(255,255,255,0.7)" tt="uppercase" fw={600} style={{ letterSpacing: 1 }}>
-            Skadeavdelingen · Bjarne følger med
+            {t('Skadeavdelingen · Bjarne følger med', 'Claims department · Bjarne is watching')}
           </Text>
         </Stack>
       </Group>
@@ -77,7 +79,7 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
               {poeng}
             </Text>
             <Text fz={13} c="rgba(255,255,255,0.75)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
-              poeng
+              {t('poeng', 'points')}
             </Text>
           </Stack>
 
@@ -91,7 +93,7 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
             </Text>
           </Stack>
 
-          <Stack gap={2} align="center" miw={56} aria-label={`${livIgjen} av ${liv} liv igjen`}>
+          <Stack gap={2} align="center" miw={56} aria-label={t(`${livIgjen} av ${liv} liv igjen`, `${livIgjen} of ${liv} lives left`)}>
             <Group gap={0} wrap="nowrap" lh={1} fz={20}>
               {Array.from({ length: liv }, (_, i) => (
                 // key med livIgjen: hjertet som nettopp ble mistet, animeres.
@@ -101,23 +103,27 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
               ))}
             </Group>
             <Text fz={13} c="rgba(255,255,255,0.75)" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
-              liv
+              {t('liv', 'lives')}
             </Text>
           </Stack>
 
           <Divider orientation="vertical" color="rgba(255,255,255,0.2)" />
 
-          <Group gap="sm" wrap="nowrap" align="flex-start" aria-label="Din tilstand">
+          <Group gap="sm" wrap="nowrap" align="flex-start" aria-label={t('Din tilstand', 'Your condition')}>
             {MAALERE.map((konfig) => {
               const verdi = maalere[konfig.id];
               const kritisk = erKritisk(konfig, verdi);
               const grad = alvorlighet(konfig, verdi);
+              const navn = t(konfig.navn, konfig.navnEn);
+              const knapp = t(konfig.knapp, konfig.knappEn);
+              const knappUnderveis =
+                konfig.knappUnderveis !== undefined ? t(konfig.knappUnderveis, konfig.knappUnderveisEn) : undefined;
 
               return (
                 <Stack key={konfig.id} gap={8} w={122}>
                   <Group gap={4} wrap="nowrap" justify="space-between">
                     <Text fz={15} fw={700} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.9)'}>
-                      {konfig.emoji} {konfig.navn}
+                      {konfig.emoji} {navn}
                     </Text>
                     <Text fz={15} fw={800} c={kritisk ? '#ffd43b' : 'rgba(255,255,255,0.75)'}>
                       {Math.round(verdi)}%
@@ -134,11 +140,11 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
                     animated={kritisk}
                     striped={kritisk}
                     transitionDuration={0}
-                    aria-label={`${konfig.navn}: ${Math.round(verdi)} prosent`}
+                    aria-label={t(`${navn}: ${Math.round(verdi)} prosent`, `${navn}: ${Math.round(verdi)} percent`)}
                   />
 
                   <Tooltip
-                    label={konfig.tiltakBeskrivelse}
+                    label={t(konfig.tiltakBeskrivelse, konfig.tiltakBeskrivelseEn)}
                     withArrow
                     openDelay={400}
                     multiline
@@ -154,7 +160,7 @@ export function Hud({ visStatus, poeng, level, liv, livIgjen, maalere, tommes, o
                       className={kritisk && grad > 0.85 ? classes.roper : undefined}
                       styles={{ root: { paddingInline: 6 }, label: { fontSize: 14, fontWeight: 800 } }}
                     >
-                      {tommes.includes(konfig.id) ? (konfig.knappUnderveis ?? konfig.knapp) : konfig.knapp}
+                      {tommes.includes(konfig.id) ? (knappUnderveis ?? knapp) : knapp}
                     </Button>
                   </Tooltip>
                 </Stack>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { TAPSMELDINGER, finnTittel, plukk } from '../data/saker';
+import { tekst } from '../../../sprak';
+import { TAPSMELDINGER, TAPSMELDINGER_EN, finnTittel, plukk } from '../data/saker';
 import { KATEGORIER, SAKMALER } from '../data/skadesaker';
 import { GRAD_ETTER_ID, STANDARD_GRAD, type VanskelighetsgradId } from '../data/vanskelighetsgrader';
 import type {
@@ -49,9 +50,15 @@ const levelFor = (aktivMs: number) =>
 
 function tomForLivTekst(tapt: number, feil: number): string {
   const deler = [];
-  if (tapt > 0) deler.push(`${tapt} ${tapt === 1 ? 'kunde gikk' : 'kunder gikk'} lei`);
-  if (feil > 0) deler.push(`${feil} feil svar`);
-  return `Tom for liv: ${deler.join(' og ')}.`;
+  if (tapt > 0)
+    deler.push(
+      tekst(
+        `${tapt} ${tapt === 1 ? 'kunde gikk' : 'kunder gikk'} lei`,
+        `${tapt} ${tapt === 1 ? 'customer' : 'customers'} gave up`,
+      ),
+    );
+  if (feil > 0) deler.push(tekst(`${feil} feil svar`, `${feil} wrong ${feil === 1 ? 'answer' : 'answers'}`));
+  return tekst(`Tom for liv: ${deler.join(' og ')}.`, `Out of lives: ${deler.join(' and ')}.`);
 }
 
 function bland<T>(liste: T[]): T[] {
@@ -130,8 +137,10 @@ export function useSkadeko() {
     const ledige = SAKMALER.filter((m) => !paBordet.has(m.beskrivelse));
     const mal = plukk(ledige.length > 0 ? ledige : SAKMALER);
 
-    const riktigTekst = mal.svar[mal.riktig];
-    const svar = bland(mal.svar);
+    // Bland indeksene, så norsk og engelsk står i samme rekkefølge.
+    const rekkefolge = bland(mal.svar.map((_, i) => i));
+    const svar = rekkefolge.map((i) => mal.svar[i]);
+    const svarEn = rekkefolge.map((i) => mal.svarEn[i]);
     const varighet =
       grunnVarighet(aktivTid(na)) *
       GRAD_ETTER_ID[gradRef.current].varighetFaktor *
@@ -142,7 +151,8 @@ export function useSkadeko() {
       ...mal,
       id: nesteId.current++,
       svar,
-      riktig: svar.indexOf(riktigTekst),
+      svarEn,
+      riktig: rekkefolge.indexOf(mal.riktig),
       frist: na + varighet,
       varighet,
       igjen: 1,
@@ -167,8 +177,14 @@ export function useSkadeko() {
         const igjen = (sak.frist - na) / sak.varighet;
         if (igjen <= 0) {
           mistet += 1;
-          tapteSaker.current.push(`Kunden gikk lei: ${sak.beskrivelse} (${sak.kunde})`);
-          sisteTap = plukk(TAPSMELDINGER);
+          tapteSaker.current.push(
+            tekst(
+              `Kunden gikk lei: ${sak.beskrivelse} (${sak.kunde})`,
+              `Customer gave up: ${sak.beskrivelseEn} (${sak.kunde})`,
+            ),
+          );
+          const i = Math.floor(Math.random() * TAPSMELDINGER.length);
+          sisteTap = tekst(TAPSMELDINGER[i], TAPSMELDINGER_EN[i]);
         } else {
           overlevende.push({ ...sak, igjen });
         }
@@ -240,20 +256,29 @@ export function useSkadeko() {
       poengRef.current += sum;
       behandletRef.current += 1;
 
-      const deler = [`${kategori.poeng} for saken`];
-      if (tidsbonus > 0) deler.push(`${tidsbonus} i tidsbonus`);
-      if (combobonus > 0) deler.push(`${combobonus} i combo (${comboRef.current} på rad)`);
+      const deler = [tekst(`${kategori.poeng} for saken`, `${kategori.poeng} for the claim`)];
+      if (tidsbonus > 0) deler.push(tekst(`${tidsbonus} i tidsbonus`, `${tidsbonus} time bonus`));
+      if (combobonus > 0)
+        deler.push(
+          tekst(
+            `${combobonus} i combo (${comboRef.current} på rad)`,
+            `${combobonus} combo (${comboRef.current} in a row)`,
+          ),
+        );
       setTilbakemelding({
         id: Date.now(),
         riktig: true,
         poeng: sum,
-        tekst: `Riktig! +${sum} (${deler.join(', ')})`,
+        tekst: tekst(`Riktig! +${sum} (${deler.join(', ')})`, `Correct! +${sum} (${deler.join(', ')})`),
       });
     } else {
       comboRef.current = 0;
       poengRef.current = Math.max(0, poengRef.current - TREKK_FEIL_SVAR);
       tapteSaker.current.push(
-        `Feil svar: ${sak.beskrivelse} (${sak.kunde}) — svarte «${sak.svar[valg]}»`,
+        tekst(
+          `Feil svar: ${sak.beskrivelse} (${sak.kunde}) — svarte «${sak.svar[valg]}»`,
+          `Wrong answer: ${sak.beskrivelseEn} (${sak.kunde}) — answered “${sak.svarEn[valg]}”`,
+        ),
       );
       feilRef.current += 1;
       setFeil(feilRef.current);
@@ -261,17 +286,20 @@ export function useSkadeko() {
         id: Date.now(),
         riktig: false,
         poeng: -TREKK_FEIL_SVAR,
-        tekst: `Feil! −${TREKK_FEIL_SVAR} og −1 liv. Riktig svar var: ${sak.svar[sak.riktig]}`,
+        tekst: tekst(
+          `Feil! −${TREKK_FEIL_SVAR} og −1 liv. Riktig svar var: ${sak.svar[sak.riktig]}`,
+          `Wrong! −${TREKK_FEIL_SVAR} and −1 life. The right answer was: ${sak.svarEn[sak.riktig]}`,
+        ),
       });
-      if (taptRef.current + feilRef.current >= LIV) {
-        avsluttDagen(tomForLivTekst(taptRef.current, feilRef.current));
-        return;
-      }
     }
 
+    // Oppdateres før en eventuell slutt på dagen, så butikken viser riktig saldo.
     setCombo(comboRef.current);
     setBehandlet(behandletRef.current);
     setPoeng(poengRef.current);
+    if (valg !== sak.riktig && taptRef.current + feilRef.current >= LIV) {
+      avsluttDagen(tomForLivTekst(taptRef.current, feilRef.current));
+    }
   }, [avsluttDagen]);
 
   /** Starter en ny arbeidsdag på valgt vanskelighetsgrad. */
@@ -337,6 +365,17 @@ export function useSkadeko() {
     frame.current = requestAnimationFrame(tick);
   }, [tick]);
 
+  /** Om køen står stille akkurat nå — leser ref-en, så svaret er ferskt også midt i et klikk. */
+  const erPauset = useCallback(() => pausetPa.current !== 0, []);
+
+  /** Trekker poeng for et kjøp i butikken. Returnerer false hvis det ikke er nok poeng. */
+  const brukPoeng = useCallback((pris: number) => {
+    if (poengRef.current < pris) return false;
+    poengRef.current -= pris;
+    setPoeng(poengRef.current);
+    return true;
+  }, []);
+
   /** Stempler ut uten å fullføre dagen: ingen rapport, ingen poengtavle. */
   const gaaTilStart = useCallback(() => {
     kjorer.current = false;
@@ -352,12 +391,21 @@ export function useSkadeko() {
     setTilstand('ikke-startet');
   }, []);
 
-  // Pause nedtellingen når fanen ikke er synlig.
+  // Pause nedtellingen når fanen ikke er synlig — men gjenoppta bare en pause
+  // vi satte selv, ellers starter køen bak et åpent tiltak eller butikken.
+  const pausetAvFane = useRef(false);
   useEffect(() => {
     const vedBytte = () => {
       if (!kjorer.current) return;
-      if (document.hidden) pause();
-      else fortsett();
+      if (document.hidden) {
+        if (pausetPa.current === 0) {
+          pause();
+          pausetAvFane.current = true;
+        }
+      } else if (pausetAvFane.current) {
+        pausetAvFane.current = false;
+        fortsett();
+      }
     };
     document.addEventListener('visibilitychange', vedBytte);
     return () => document.removeEventListener('visibilitychange', vedBytte);
@@ -390,6 +438,8 @@ export function useSkadeko() {
     svarPaSak,
     pause,
     fortsett,
+    erPauset,
+    brukPoeng,
     liv: LIV,
     livIgjen: Math.max(0, LIV - tapt - feil),
   };

@@ -6,6 +6,7 @@ import { useFerdig } from '../lib/useFerdig';
 import { SPILLTID_SEKUNDER } from '../lib/stress';
 import { useNedtelling } from '../lib/useNedtelling';
 import type { MiniSpillProps } from '../types/stresspause.types';
+import { useSprak } from '../../../sprak';
 import classes from './spill.module.css';
 
 const SEKUNDER = SPILLTID_SEKUNDER;
@@ -14,17 +15,18 @@ const MÅL = 30;
 const DELER = ['🔩', '⚙️', '📄', '🧻', '💥', '🪛', '📄', '🔧'];
 /** Terskel = andel av MÅL. */
 const ANSIKT = [
-  { terskel: 0, fjes: '😏', replikk: 'PAPIRSTOPP I SKUFF 2' },
-  { terskel: 0.15, fjes: '😐', replikk: 'Toner lav. Toner alltid lav.' },
-  { terskel: 0.35, fjes: '😟', replikk: 'Vent, vi kan snakke om dette' },
-  { terskel: 0.55, fjes: '😰', replikk: 'Jeg skal skrive ut! JEG LOVER!' },
-  { terskel: 0.8, fjes: '😵', replikk: 'Pcl-feil... 49.4c02...' },
-  { terskel: 1, fjes: '💀', replikk: '*siste pip*' },
+  { terskel: 0, fjes: '😏', replikk: 'PAPIRSTOPP I SKUFF 2', replikkEn: 'PAPER JAM IN TRAY 2' },
+  { terskel: 0.15, fjes: '😐', replikk: 'Toner lav. Toner alltid lav.', replikkEn: 'Toner low. Toner always low.' },
+  { terskel: 0.35, fjes: '😟', replikk: 'Vent, vi kan snakke om dette', replikkEn: 'Wait, we can talk about this' },
+  { terskel: 0.55, fjes: '😰', replikk: 'Jeg skal skrive ut! JEG LOVER!', replikkEn: 'I\'ll print! I PROMISE!' },
+  { terskel: 0.8, fjes: '😵', replikk: 'Pcl-feil... 49.4c02...', replikkEn: 'PCL error... 49.4c02...' },
+  { terskel: 1, fjes: '💀', replikk: '*siste pip*', replikkEn: '*final beep*' },
 ];
 
 type Del = { id: number; emoji: string; x: number; y: number; dx: number; dy: number; rot: number };
 
 export function KnusSkriveren({ onFerdig }: MiniSpillProps) {
+  const { t } = useSprak();
   const ferdig = useFerdig(onFerdig);
   const [slag, setSlag] = useState(0);
   const [deler, setDeler] = useState<Del[]>([]);
@@ -71,9 +73,9 @@ export function KnusSkriveren({ onFerdig }: MiniSpillProps) {
   const tilstand = [...ANSIKT].reverse().find((a) => skade >= a.terskel) ?? ANSIKT[0];
 
   return (
-    <SpillRamme igjen={igjen} total={SEKUNDER} status={`Slag: ${slag} · Skade: ${Math.round(skade * 100)} %`}>
+    <SpillRamme igjen={igjen} total={SEKUNDER} status={`${t('Slag', 'Hits')}: ${slag} · ${t('Skade', 'Damage')}: ${Math.round(skade * 100)} %`}>
       <div ref={flate} className={classes.knuseflate} onPointerDown={(e: ReactPointerEvent) => slå(e.clientX, e.clientY)}>
-        <div className={classes.skriverBoble}>{tilstand.replikk}</div>
+        <div className={classes.skriverBoble}>{t(tilstand.replikk, tilstand.replikkEn)}</div>
         <div
           key={rist}
           className={classes.skriver}
@@ -95,7 +97,7 @@ export function KnusSkriveren({ onFerdig }: MiniSpillProps) {
           </span>
         ))}
       </div>
-      <p className={classes.hint}>Klikk (eller hamre på mellomrom) så fort du orker. Ingen skrivere ble skadet i virkeligheten.</p>
+      <p className={classes.hint}>{t('Klikk (eller hamre på mellomrom) så fort du orker. Ingen skrivere ble skadet i virkeligheten.', 'Click (or hammer the space bar) as fast as you can. No printers were harmed in real life.')}</p>
     </SpillRamme>
   );
 }

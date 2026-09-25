@@ -4,6 +4,7 @@ import { lyd } from '../lib/lyd';
 import { SPILLTID_SEKUNDER } from '../lib/stress';
 import { useFerdig } from '../lib/useFerdig';
 import type { MiniSpillProps } from '../types/stresspause.types';
+import { useSprak } from '../../../sprak';
 import classes from './spill.module.css';
 
 const SEKUNDER = SPILLTID_SEKUNDER;
@@ -14,6 +15,10 @@ const NÅDETID = 0.5;
 const REPLIKKER = {
   riktig: ['Mm. Ballen godkjenner.', 'Jevnt og fint.', 'Du puster nesten som en voksen.', 'Ballen er fornøyd.'],
   feil: ['Ballen er forvirret.', 'Det var ikke det vi avtalte.', 'Bjarne himler med øynene.'],
+};
+const REPLIKKER_EN = {
+  riktig: ['Mm. The ball approves.', 'Nice and steady.', 'You\'re almost breathing like a grown-up.', 'The ball is pleased.'],
+  feil: ['The ball is confused.', 'That\'s not what we agreed.', 'Bjarne rolls his eyes.'],
 };
 
 function fase(t: number): { klem: boolean; igjen: number; lengde: number; inne: number } {
@@ -32,6 +37,7 @@ function poengFraTakt(andel: number) {
 }
 
 export function Stressballen({ onFerdig }: MiniSpillProps) {
+  const { t: tr } = useSprak();
   const ferdig = useFerdig(onFerdig);
   const [t, setT] = useState(0);
   const [holder, setHolder] = useState(false);
@@ -89,14 +95,15 @@ export function Stressballen({ onFerdig }: MiniSpillProps) {
 
   const f = fase(t);
   const synk = holder === f.klem;
-  const replikkListe = synk ? REPLIKKER.riktig : REPLIKKER.feil;
+  const replikker = tr(REPLIKKER, REPLIKKER_EN);
+  const replikkListe = synk ? replikker.riktig : replikker.feil;
   const replikk = replikkListe[Math.floor(t / 3) % replikkListe.length];
 
   return (
-    <SpillRamme igjen={Math.max(0, SEKUNDER - t)} total={SEKUNDER} status={`I takt: ${Math.round(andel * 100)} %`}>
+    <SpillRamme igjen={Math.max(0, SEKUNDER - t)} total={SEKUNDER} status={`${tr('I takt', 'In sync')}: ${Math.round(andel * 100)} %`}>
       <div className={classes.ballflate}>
         <div className={classes.instruks} data-klem={f.klem || undefined}>
-          {f.klem ? 'KLEM' : 'SLIPP'}
+          {f.klem ? tr('KLEM', 'SQUEEZE') : tr('SLIPP', 'RELEASE')}
           <div className={classes.faseBar}>
             <div style={{ width: `${(f.igjen / f.lengde) * 100}%` }} />
           </div>
@@ -109,14 +116,14 @@ export function Stressballen({ onFerdig }: MiniSpillProps) {
           data-holder={holder || undefined}
           data-synk={synk || undefined}
           onPointerDown={() => sett(true)}
-          aria-label="Stressball"
+          aria-label={tr('Stressball', 'Stress ball')}
         >
           <span className={classes.ballFjes}>{holder ? '😖' : synk ? '😌' : '🙂'}</span>
         </button>
         </div>
         <div className={classes.ballReplikk}>{replikk}</div>
       </div>
-      <p className={classes.hint}>Hold inne museknappen (eller mellomrom) når det står KLEM. Slipp når det står SLIPP.</p>
+      <p className={classes.hint}>{tr('Hold inne museknappen (eller mellomrom) når det står KLEM. Slipp når det står SLIPP.', 'Hold the mouse button (or space) when it says SQUEEZE. Let go when it says RELEASE.')}</p>
     </SpillRamme>
   );
 }

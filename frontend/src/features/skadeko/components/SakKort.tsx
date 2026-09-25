@@ -3,6 +3,7 @@ import { sakensIkon } from '../data/ikoner';
 import { KATEGORIER } from '../data/skadesaker';
 import type { Sak } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
+import { useSprak } from '../../../sprak';
 
 type Props = {
   sak: Sak;
@@ -15,6 +16,9 @@ export function SakKort({ sak, onApne }: Props) {
   const farge = haster ? 'red' : advarsel ? 'yellow' : 'teal';
   const kategori = KATEGORIER[sak.kategori];
   const Ikon = sakensIkon(sak.emoji);
+  const { t } = useSprak();
+  const kategoriNavn = t(kategori.navn, kategori.navnEn);
+  const beskrivelse = t(sak.beskrivelse, sak.beskrivelseEn);
 
   return (
     <Box
@@ -22,9 +26,12 @@ export function SakKort({ sak, onApne }: Props) {
       type="button"
       onClick={() => onApne(sak.id)}
       className={`${classes.sak} ${classes[`kant_${sak.kategori}`]} ${haster ? classes.haster : ''}`}
-      aria-label={`Åpne ${kategori.navn.toLowerCase()} sak fra ${sak.kunde}: ${sak.beskrivelse}`}
+      aria-label={t(
+        `Åpne ${kategoriNavn.toLowerCase()} sak fra ${sak.kunde}: ${beskrivelse}`,
+        `Open ${kategoriNavn.toLowerCase()} claim from ${sak.kunde}: ${beskrivelse}`,
+      )}
     >
-      {haster && <span className={classes.stempel}>HASTER</span>}
+      {haster && <span className={classes.stempel}>{t('HASTER', 'URGENT')}</span>}
       <Stack gap={8} align="flex-start">
         <Group gap={10} wrap="nowrap">
           <Box
@@ -35,16 +42,16 @@ export function SakKort({ sak, onApne }: Props) {
             <Ikon size={22} stroke={1.75} aria-hidden />
           </Box>
           <Stack gap={2}>
-            <Text fz="sm" fw={600} lh={1.2} c="dark.7">
+            <Text fz="sm" fw={600} lh={1.2}>
               {sak.kunde}
             </Text>
             <Badge color={kategori.farge} variant="light" size="xs" radius="sm">
-              {kategori.navn} · {kategori.poeng}p
+              {kategoriNavn} · {kategori.poeng}p
             </Badge>
           </Stack>
         </Group>
-        <Text fz="sm" lh={1.4} ta="left" c="dark.5" lineClamp={3}>
-          {sak.beskrivelse}
+        <Text fz="sm" lh={1.4} ta="left" c="dimmed" lineClamp={3}>
+          {beskrivelse}
         </Text>
       </Stack>
       {/* Oppdateres hver frame: en CSS-overgang ville startet på nytt hele tiden og fått baren til å fryse. */}
@@ -54,7 +61,7 @@ export function SakKort({ sak, onApne }: Props) {
         size={6}
         radius="xl"
         mt="md"
-        bg="gray.2"
+        bg="light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4))"
         transitionDuration={0}
       />
     </Box>

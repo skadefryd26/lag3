@@ -5,6 +5,7 @@ import { SPILLTID_SEKUNDER } from '../lib/stress';
 import { useFerdig } from '../lib/useFerdig';
 import { useNedtelling } from '../lib/useNedtelling';
 import type { MiniSpillProps } from '../types/stresspause.types';
+import { tekst, useSprak } from '../../../sprak';
 import classes from './spill.module.css';
 
 const KOPP = { bredde: 130, høyde: 150 };
@@ -26,13 +27,14 @@ function treff(nivå: number, strek: number) {
 
 function vurdering(nivå: number, strek: number): string {
   const avvik = nivå - strek;
-  if (nivå > 1) return 'SØL! ☕💦 Bjarne later som han ikke så det.';
-  if (Math.abs(avvik) < 0.015) return 'PERFEKT! ✨ Barista-nivå.';
-  if (Math.abs(avvik) < 0.05) return avvik > 0 ? 'Et hårstrå over. Godkjent.' : 'Et hårstrå under. Godkjent.';
-  return avvik > 0 ? 'Litt mye. Bjarne tar skummet.' : 'Litt snaut. Det er nesten en espresso.';
+  if (nivå > 1) return tekst('SØL! ☕💦 Bjarne later som han ikke så det.', 'SPILL! ☕💦 Bjarne pretends he didn\'t see that.');
+  if (Math.abs(avvik) < 0.015) return tekst('PERFEKT! ✨ Barista-nivå.', 'PERFECT! ✨ Barista level.');
+  if (Math.abs(avvik) < 0.05) return avvik > 0 ? tekst('Et hårstrå over. Godkjent.', 'A hair over. Approved.') : tekst('Et hårstrå under. Godkjent.', 'A hair under. Approved.');
+  return avvik > 0 ? tekst('Litt mye. Bjarne tar skummet.', 'A bit much. Bjarne takes the froth.') : tekst('Litt snaut. Det er nesten en espresso.', 'A bit short. It\'s almost an espresso.');
 }
 
 export function Kaffehelling({ onFerdig }: MiniSpillProps) {
+  const { t } = useSprak();
   const ferdig = useFerdig(onFerdig);
   const strek = useMemo(() => 0.6 + Math.random() * 0.28, []);
   const [nivå, setNivå] = useState(0);
@@ -122,7 +124,7 @@ export function Kaffehelling({ onFerdig }: MiniSpillProps) {
   const heller = fase === 'heller' || fase === 'drypper';
 
   return (
-    <SpillRamme igjen={igjen} total={SPILLTID_SEKUNDER} status="Hell til streken">
+    <SpillRamme igjen={igjen} total={SPILLTID_SEKUNDER} status={t('Hell til streken', 'Pour to the line')}>
       <div className={classes.hellflate}>
         <div className={classes.hellScene}>
           <div className={classes.kanne} data-heller={heller || undefined}>
@@ -136,7 +138,7 @@ export function Kaffehelling({ onFerdig }: MiniSpillProps) {
           )}
           <div className={classes.kopp} style={{ width: KOPP.bredde, height: KOPP.høyde }}>
             <div className={classes.koppStrek} style={{ bottom: `${strek * 100}%` }}>
-              <span>strek</span>
+              <span>{t('strek', 'line')}</span>
             </div>
             <div className={classes.kaffe} style={{ height: `${vist * 100}%` }} />
             {søl && <div className={classes.sol} style={{ width: `${KOPP.bredde + (nivå - 1) * 500}px` }} />}
@@ -152,7 +154,7 @@ export function Kaffehelling({ onFerdig }: MiniSpillProps) {
           disabled={fase === 'vurdert' || fase === 'drypper'}
           onPointerDown={start}
         >
-          {fase === 'heller' ? 'Heller… ☕' : 'Hold for å helle'}
+          {fase === 'heller' ? t('Heller… ☕', 'Pouring… ☕') : t('Hold for å helle', 'Hold to pour')}
         </button>
       </div>
     </SpillRamme>
