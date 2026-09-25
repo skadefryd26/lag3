@@ -1,3 +1,5 @@
+import { tekst } from '../../../sprak';
+
 /** Ingen mini-spill skal ta mer enn dette. Skadekøen står stille imens. */
 export const SPILLTID_SEKUNDER = 15;
 
@@ -24,15 +26,15 @@ export function energiØkning(score: number): number {
 }
 
 export function bjarnesKaffedom(score: number): string {
-  if (score >= 0.9) return 'Perfekt helt. Jeg ville gjort det likt. Bare raskere.';
-  if (score >= 0.6) return 'Drikkbar. Jeg har fått verre fra kaffemaskinen.';
-  if (score >= 0.3) return '*sukk* Det er kaffe. Teknisk sett.';
-  return 'Mer på bordet enn i koppen. Men koffeinen finner veien.';
+  if (score >= 0.9) return tekst('Perfekt helt. Jeg ville gjort det likt. Bare raskere.', 'Perfectly poured. I would have done the same. Just faster.');
+  if (score >= 0.6) return tekst('Drikkbar. Jeg har fått verre fra kaffemaskinen.', 'Drinkable. I\'ve had worse from the coffee machine.');
+  if (score >= 0.3) return tekst('*sukk* Det er kaffe. Teknisk sett.', '*sigh* It is coffee. Technically.');
+  return tekst('Mer på bordet enn i koppen. Men koffeinen finner veien.', 'More on the desk than in the cup. But the caffeine finds a way.');
 }
 
 export function bjarnesDom(score: number): string {
-  if (score >= 0.9) return 'Imponerende. Nesten like bra som meg på en dårlig dag.';
-  if (score >= 0.7) return 'Greit nok. Jeg har sett verre. Har jeg vært verre? Nei.';
-  if (score >= 0.4) return '*sukk* Det teller. Visstnok.';
-  return 'Du fullførte i det minste. Det er mer enn skriveren klarer.';
+  if (score >= 0.9) return tekst('Imponerende. Nesten like bra som meg på en dårlig dag.', 'Impressive. Almost as good as me on a bad day.');
+  if (score >= 0.7) return tekst('Greit nok. Jeg har sett verre. Har jeg vært verre? Nei.', 'Fair enough. I\'ve seen worse. Have I been worse? No.');
+  if (score >= 0.4) return tekst('*sukk* Det teller. Visstnok.', '*sigh* It counts. Apparently.');
+  return tekst('Du fullførte i det minste. Det er mer enn skriveren klarer.', 'At least you finished. That\'s more than the printer manages.');
 }

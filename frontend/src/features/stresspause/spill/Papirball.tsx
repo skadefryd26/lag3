@@ -6,6 +6,7 @@ import { SPILLTID_SEKUNDER } from '../lib/stress';
 import { useFerdig } from '../lib/useFerdig';
 import { useNedtelling } from '../lib/useNedtelling';
 import type { MiniSpillProps } from '../types/stresspause.types';
+import { tekst, useSprak } from '../../../sprak';
 import classes from './spill.module.css';
 
 const B = 720;
@@ -39,6 +40,7 @@ function nyRunde(s: Tilstand) {
 }
 
 export function Papirball({ onFerdig }: MiniSpillProps) {
+  const { t } = useSprak();
   const ferdig = useFerdig(onFerdig);
   const canvas = useRef<HTMLCanvasElement>(null);
   const s = useRef<Tilstand>({
@@ -157,7 +159,7 @@ export function Papirball({ onFerdig }: MiniSpillProps) {
       } else {
         lyd.pop();
       }
-      st.melding = treff ? 'SWISH! 🏀' : ['Nesten!', 'Bøtta flyttet seg', 'Teller ikke', 'Kunstnerisk bom'][Math.floor(Math.random() * 4)];
+      st.melding = treff ? 'SWISH! 🏀' : tekst(['Nesten!', 'Bøtta flyttet seg', 'Teller ikke', 'Kunstnerisk bom'], ['So close!', 'The bin moved', 'Doesn\'t count', 'Artistic miss'])[Math.floor(Math.random() * 4)];
       st.meldingTid = performance.now();
       st.fase = 'pause';
       setHud({ kast: st.kast, treff: st.treff });
@@ -206,7 +208,7 @@ export function Papirball({ onFerdig }: MiniSpillProps) {
   }
 
   return (
-    <SpillRamme igjen={igjen} total={SPILLTID_SEKUNDER} status={`Treff: ${hud.treff} / ${hud.kast} · ${'🧻'.repeat(KAST - hud.kast)}`}>
+    <SpillRamme igjen={igjen} total={SPILLTID_SEKUNDER} status={`${t('Treff', 'Hits')}: ${hud.treff} / ${hud.kast} · ${'🧻'.repeat(KAST - hud.kast)}`}>
       <canvas
         ref={canvas}
         width={B}
@@ -216,7 +218,7 @@ export function Papirball({ onFerdig }: MiniSpillProps) {
         onPointerMove={flytt}
         onPointerUp={opp}
       />
-      <p className={classes.hint}>Dra bakover fra hvor som helst (som en sprettert) og slipp.</p>
+      <p className={classes.hint}>{t('Dra bakover fra hvor som helst (som en sprettert) og slipp.', 'Pull back from anywhere (like a slingshot) and let go.')}</p>
     </SpillRamme>
   );
 }

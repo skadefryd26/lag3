@@ -2,6 +2,7 @@ import { Badge, Button, Group, Modal, Progress, Stack, Text } from '@mantine/cor
 import { sakensIkon } from '../data/ikoner';
 import { KATEGORIER } from '../data/skadesaker';
 import type { Sak } from '../types/skadeko.types';
+import { useSprak } from '../../../sprak';
 
 type Props = {
   sak: Sak | null;
@@ -14,6 +15,7 @@ const BOKSTAVER = ['A', 'B', 'C'];
 /** Saken åpnet: les hva kunden skriver, og velg riktig håndtering. Klokka går fortsatt. */
 export function SakDialog({ sak, onSvar, onLukk }: Props) {
   const kategori = sak ? KATEGORIER[sak.kategori] : null;
+  const { t } = useSprak();
 
   return (
     <Modal
@@ -28,7 +30,7 @@ export function SakDialog({ sak, onSvar, onLukk }: Props) {
           <Group gap="sm">
             <IconForSak emoji={sak.emoji} />
             <Badge color={kategori.farge} variant="filled" size="lg" radius="sm">
-              {kategori.navn}
+              {t(kategori.navn, kategori.navnEn)}
             </Badge>
             <Text fw={700}>{sak.kunde}</Text>
           </Group>
@@ -43,14 +45,14 @@ export function SakDialog({ sak, onSvar, onLukk }: Props) {
             size="sm"
             radius="xl"
             transitionDuration={0}
-            aria-label="Kundens tålmodighet"
+            aria-label={t('Kundens tålmodighet', "Customer's patience")}
           />
           <Text fz="lg" fs="italic">
-            «{sak.beskrivelse}»
+            «{t(sak.beskrivelse, sak.beskrivelseEn)}»
           </Text>
-          <Text fw={800}>{sak.sporsmal}</Text>
+          <Text fw={800}>{t(sak.sporsmal, sak.sporsmalEn)}</Text>
           <Stack gap="xs">
-            {sak.svar.map((tekst, i) => (
+            {t(sak.svar, sak.svarEn).map((tekst, i) => (
               <Button
                 key={tekst}
                 variant="light"

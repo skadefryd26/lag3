@@ -37,5 +37,12 @@ Skriv medarbeidersamtalen.`;
 export async function hentMedarbeidersamtale(
   stats: MedarbeidersamtaleRequest,
 ): Promise<string> {
-  return kallGateway(BJARNE_SYSTEMPROMPT, byggRapport(stats));
+  const rolleBytte = stats.sjef
+    ? '\n\nVIKTIG ROLLEBYTTE: Spilleren har kjøpt en forfremmelse og er nå DIN sjef. Du, Bjarne, er degradert til vanlig skadebehandler. Skriv ikke en medarbeidersamtale – skriv i stedet en kort, sur og overdrevent underdanig rapport fra deg til din nye sjef om dagens tall, der du motvillig roser sjefen og klager over at du selv nå må behandle saker.'
+    : '';
+  const instruks =
+    stats.sprak === 'en'
+      ? `${BJARNE_SYSTEMPROMPT}${rolleBytte}\n\nIMPORTANT: Write the entire text in natural British English, not Norwegian. Keep the same tone and personality.`
+      : `${BJARNE_SYSTEMPROMPT}${rolleBytte}`;
+  return kallGateway(instruks, byggRapport(stats));
 }

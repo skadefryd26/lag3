@@ -3,6 +3,7 @@ import { Button, Stack, Text, Title } from '@mantine/core';
 import { bjarnesDom, bjarnesKaffedom, energiØkning, stressReduksjon } from '../../../stresspause/lib/stress';
 import { MINI_SPILL } from '../../../stresspause/spill/register';
 import type { MiniSpill } from '../../../stresspause/types/stresspause.types';
+import { useSprak } from '../../../../sprak';
 import type { TiltakSpill, TiltakSpillProps } from './registry';
 
 type Oppsett = {
@@ -23,6 +24,7 @@ function lagTiltak({ utvalg, effekt, dom, utenIntro = false }: Oppsett): TiltakS
   return function MiniSpillTiltak({ onFerdig }: TiltakSpillProps) {
     const [spill] = useState(() => utvalg[Math.floor(Math.random() * utvalg.length)]);
     const [startet, setStartet] = useState(utenIntro);
+    const { t } = useSprak();
 
     useEffect(() => {
       if (startet) return;
@@ -37,10 +39,10 @@ function lagTiltak({ utvalg, effekt, dom, utenIntro = false }: Oppsett): TiltakS
       return (
         <Stack align="center" gap="lg" py="md">
           <Title order={2} ta="center">
-            {spill.navn}
+            {t(spill.navn, spill.navnEn)}
           </Title>
           <Text fz="lg" fw={700} ta="center">
-            {spill.slikSpiller}
+            {t(spill.slikSpiller, spill.slikSpillerEn)}
           </Text>
           <Button size="lg" color="teal" onClick={() => setStartet(true)}>
             Start ▶
@@ -54,7 +56,7 @@ function lagTiltak({ utvalg, effekt, dom, utenIntro = false }: Oppsett): TiltakS
         onFerdig={(score) =>
           onFerdig({
             endring: effekt(score),
-            melding: `${spill.navn}: ${Math.round(score * 100)} %. ${dom(score)}`,
+            melding: `${t(spill.navn, spill.navnEn)}: ${Math.round(score * 100)} %. ${dom(score)}`,
           })
         }
       />

@@ -1,6 +1,7 @@
 import { Button, Group, Modal, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import type { Highscore } from '../hooks/useHighscores';
+import { useSprak } from '../../../sprak';
 
 const MEDALJER = ['🥇', '🥈', '🥉'];
 
@@ -13,25 +14,38 @@ type ListeProps = {
 
 /** Topp 10-lista, vist i et vindu over spillet. */
 export function Highscores({ apen, onLukk, liste, nullstillesPa }: ListeProps) {
+  const { t, sprak } = useSprak();
   const dager = Math.max(1, Math.ceil((nullstillesPa.getTime() - Date.now()) / 86_400_000));
+  const dato = nullstillesPa.toLocaleDateString(sprak === 'en' ? 'en-GB' : 'nb-NO', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
   return (
-    <Modal opened={apen} onClose={onLukk} title="🏆 Poengtavle — ukens mest effektive" centered radius="lg">
+    <Modal
+      opened={apen}
+      onClose={onLukk}
+      title={t('🏆 Poengtavle — ukens mest effektive', '🏆 Leaderboard — most efficient this week')}
+      centered
+      radius="lg"
+    >
       <Text fz="xs" c="dimmed" mb="sm">
-        Tavla nullstilles om {dager} {dager === 1 ? 'dag' : 'dager'} (
-        {nullstillesPa.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' })}
-        ). Bjarne liker ikke å bli minnet på gamle prestasjoner.
+        {t(
+          `Tavla nullstilles om ${dager} ${dager === 1 ? 'dag' : 'dager'} (${dato}). Bjarne liker ikke å bli minnet på gamle prestasjoner.`,
+          `The board resets in ${dager} ${dager === 1 ? 'day' : 'days'} (${dato}). Bjarne does not like being reminded of past achievements.`,
+        )}
       </Text>
       {liste.length === 0 ? (
         <Text c="dimmed" ta="center" py="lg">
-          Ingen på tavla ennå. Bjarne er ikke overrasket.
+          {t('Ingen på tavla ennå. Bjarne er ikke overrasket.', 'Nobody on the board yet. Bjarne is not surprised.')}
         </Text>
       ) : (
         <Table striped highlightOnHover verticalSpacing="xs">
           <Table.Thead>
             <Table.Tr>
               <Table.Th w={50}>#</Table.Th>
-              <Table.Th>Skadebehandler</Table.Th>
-              <Table.Th ta="right">Poeng</Table.Th>
+              <Table.Th>{t('Skadebehandler', 'Claims handler')}</Table.Th>
+              <Table.Th ta="right">{t('Poeng', 'Points')}</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -58,13 +72,14 @@ type InnmeldingProps = {
 
 /** Vises etter endt dag når poengsummen er god nok for lista. */
 export function HighscoreInnmelding({ poeng, onLagre }: InnmeldingProps) {
+  const { t } = useSprak();
   const [navn, setNavn] = useState('');
   const [lagret, setLagret] = useState(false);
 
   if (lagret) {
     return (
       <Text fw={700} c="teal">
-        🏆 Du er på poengtavla! Bjarne har notert det, motvillig.
+        {t('🏆 Du er på poengtavla! Bjarne har notert det, motvillig.', '🏆 You made the leaderboard! Bjarne has noted it, reluctantly.')}
       </Text>
     );
   }
@@ -79,19 +94,24 @@ export function HighscoreInnmelding({ poeng, onLagre }: InnmeldingProps) {
       }}
     >
       <Stack gap="xs" p="md" style={{ borderRadius: 12, background: 'rgba(250, 176, 5, 0.12)' }}>
-        <Text fw={800}>🏆 Du kom på poengtavla med {poeng} poeng! Skriv inn navnet ditt</Text>
+        <Text fw={800}>
+          {t(
+            `🏆 Du kom på poengtavla med ${poeng} poeng! Skriv inn navnet ditt`,
+            `🏆 You made the leaderboard with ${poeng} points! Enter your name`,
+          )}
+        </Text>
         <Group gap="xs">
           <TextInput
-            aria-label="Navn"
+            aria-label={t('Navn', 'Name')}
             value={navn}
             maxLength={24}
             autoFocus
-            placeholder="Navnet ditt"
+            placeholder={t('Navnet ditt', 'Your name')}
             onChange={(e) => setNavn(e.currentTarget.value)}
             style={{ flex: 1, minWidth: 180 }}
           />
           <Button type="submit" color="yellow" c="dark" disabled={!navn.trim()}>
-            Legg til
+            {t('Legg til', 'Add')}
           </Button>
         </Group>
       </Stack>

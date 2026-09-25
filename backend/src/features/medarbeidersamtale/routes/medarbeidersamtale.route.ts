@@ -17,9 +17,10 @@ medarbeidersamtaleRouter.post<
   MedarbeidersamtaleResponse | FeilResponse,
   Partial<MedarbeidersamtaleRequest>
 >('/medarbeidersamtale', async (req, res) => {
+  const en = req.body?.sprak === 'en';
   const stats = valider(req.body);
   if (!stats) {
-    res.status(400).json({ feil: 'Bjarne skjønte ikke tallene dine. Prøv en ny arbeidsdag.' });
+    res.status(400).json({ feil: en ? 'Bjarne did not understand your numbers. Try a new working day.' : 'Bjarne skjønte ikke tallene dine. Prøv en ny arbeidsdag.' });
     return;
   }
 
@@ -30,7 +31,7 @@ medarbeidersamtaleRouter.post<
     if (feil instanceof ManglerTokenFeil) {
       console.error('[medarbeidersamtale] AI_GATEWAY_TOKEN mangler i .env.local');
       res.status(503).json({
-        feil: 'Bjarne har ikke fått nøkkelen til AI-gatewayen ennå. Si fra til kodeagenten, så henter den en ny.',
+        feil: en ? 'Bjarne has not got the AI gateway key yet. Tell the coding agent and it will fetch a new one.' : 'Bjarne har ikke fått nøkkelen til AI-gatewayen ennå. Si fra til kodeagenten, så henter den en ny.',
       });
       return;
     }
@@ -40,14 +41,14 @@ medarbeidersamtaleRouter.post<
       const utloept = feil.status === 401;
       res.status(500).json({
         feil: utloept
-          ? 'Tilgangen til AI-gatewayen gikk ut på tid. Si fra til kodeagenten, så henter den en ny nøkkel.'
-          : 'Bjarne satt fast i kaffekøen og rakk ikke å lese rapporten. Prøv en ny arbeidsdag.',
+          ? (en ? 'Access to the AI gateway timed out. Tell the coding agent and it will fetch a new key.' : 'Tilgangen til AI-gatewayen gikk ut på tid. Si fra til kodeagenten, så henter den en ny nøkkel.')
+          : en ? 'Bjarne got stuck in the coffee queue and never read your report. Try a new working day.' : 'Bjarne satt fast i kaffekøen og rakk ikke å lese rapporten. Prøv en ny arbeidsdag.',
       });
       return;
     }
 
     console.error('[medarbeidersamtale] uventet feil', feil);
-    res.status(500).json({ feil: 'Noe gikk galt hos Bjarne. Prøv en ny arbeidsdag.' });
+    res.status(500).json({ feil: en ? 'Something went wrong with Bjarne. Try a new working day.' : 'Noe gikk galt hos Bjarne. Prøv en ny arbeidsdag.' });
   }
 });
 
@@ -75,6 +76,8 @@ function valider(
     tittel: tittel.slice(0, 60),
     // Valgfri for bakoverkompatibilitet; teksten kommer fra spillets egne data.
     aarsak: typeof aarsak === 'string' ? aarsak.slice(0, 120) : 'Ukjent',
+    sprak: body.sprak === 'en' ? 'en' : 'no',
+    sjef: (body as { sjef?: unknown }).sjef === true,
     // Kort liste, korte strenger — ingenting brukeren har skrevet selv havner her.
     tapteSaker: tapteSaker.filter((s): s is string => typeof s === 'string').slice(0, 20),
   };

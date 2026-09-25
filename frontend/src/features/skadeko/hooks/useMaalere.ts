@@ -22,8 +22,15 @@ export function useMaalere(aktiv: boolean) {
   /** Sekunder spilt (uten pauser). Målerne drifter gradvis raskere utover dagen. */
   const spilt = useRef(0);
   const frame = useRef(0);
+  /** Ganges med driften per måler (f.eks. 0.5 etter kjøpt espresso). Nullstilles hver dag. */
+  const driftFaktor = useRef<Partial<Record<MaalerId, number>>>({});
+
+  const settDriftFaktor = useCallback((id: MaalerId, faktor: number) => {
+    driftFaktor.current = { ...driftFaktor.current, [id]: faktor };
+  }, []);
 
   const nullstill = useCallback(() => {
+    driftFaktor.current = {};
     setMaalere({ ...STARTVERDIER });
     setTommes([]);
     sist.current = 0;
@@ -102,7 +109,7 @@ export function useMaalere(aktiv: boolean) {
             const fart = tommesRef.current.includes(konfig.id)
               ? -(konfig.tommingPerSekund ?? 0)
               : iSpill
-                ? konfig.driftPerSekund * opptrapping
+                ? konfig.driftPerSekund * opptrapping * (driftFaktor.current[konfig.id] ?? 1)
                 : 0;
             neste[konfig.id] = klem(forrige[konfig.id] + fart * sekunder * retning);
           }
@@ -117,7 +124,7 @@ export function useMaalere(aktiv: boolean) {
     return () => cancelAnimationFrame(frame.current);
   }, [kjor]);
 
-  return { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming };
+  return { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming, settDriftFaktor };
 }
 
 function klem(verdi: number): number {

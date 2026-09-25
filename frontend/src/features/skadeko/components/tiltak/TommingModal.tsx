@@ -2,6 +2,17 @@ import { Badge, Button, Group, Modal, Stack, Text } from '@mantine/core';
 import { MAALER_ETTER_ID } from '../../data/maalere';
 import type { MaalerId } from '../../types/skadeko.types';
 import classes from './TommingModal.module.css';
+import { useSprak } from '../../../../sprak';
+
+type T = <V>(no: V, en: V) => V;
+
+function underveis(verdi: number, t: T): string {
+  if (verdi > 75) return t('Endelig. Du har holdt deg siden morgenmøtet.', "Finally. You've been holding it since the morning meeting.");
+  if (verdi > 50) return t('Aaahh… Det er nesten meditativt.', "Aaahh… It's almost meditative.");
+  if (verdi > 25) return t('Du leser dopapiret. Det står «Gjensidig respekt». Dypt.', 'You read the toilet paper. It says “Mutual respect”. Deep.');
+  if (verdi > 5) return t('Nesten tom. Teams plinger et sted langt borte.', 'Almost empty. Teams is pinging somewhere far away.');
+  return t('Ferdig! Vask hendene.', 'Done! Wash your hands.');
+}
 
 type Props = {
   /** Måleren som tømmes akkurat nå. Null = ingenting er åpent. */
@@ -12,14 +23,6 @@ type Props = {
   onAvbryt: () => void;
 };
 
-function underveis(verdi: number): string {
-  if (verdi > 75) return 'Endelig. Du har holdt deg siden morgenmøtet.';
-  if (verdi > 50) return 'Aaahh… Det er nesten meditativt.';
-  if (verdi > 25) return 'Du leser dopapiret. Det står «Gjensidig respekt». Dypt.';
-  if (verdi > 5) return 'Nesten tom. Teams plinger et sted langt borte.';
-  return 'Ferdig! Vask hendene.';
-}
-
 /**
  * Viser tydelig at en måler tømmes (blæra på do-tur). Skadekøen står stille
  * imens, som i de andre pausene.
@@ -27,6 +30,7 @@ function underveis(verdi: number): string {
 export function TommingModal({ aktiv, verdi, onAvbryt }: Props) {
   const konfig = aktiv ? MAALER_ETTER_ID[aktiv] : null;
   const prosent = Math.round(verdi);
+  const { t } = useSprak();
 
   return (
     <Modal
@@ -43,10 +47,10 @@ export function TommingModal({ aktiv, verdi, onAvbryt }: Props) {
               {konfig.emoji}
             </Text>
             <Text fw={800} fz="lg">
-              {konfig.tiltakTittel}
+              {t(konfig.tiltakTittel, konfig.tiltakTittelEn)}
             </Text>
             <Badge variant="light" color="gray" size="sm">
-              Skadekøen står stille
+              {t('Skadekøen står stille', 'The claims queue is paused')}
             </Badge>
           </Group>
         )
@@ -54,7 +58,10 @@ export function TommingModal({ aktiv, verdi, onAvbryt }: Props) {
     >
       {konfig && (
         <Stack align="center" gap="md" pb="sm">
-          <div className={classes.tank} aria-label={`${konfig.navn}: ${prosent} prosent`}>
+          <div
+            className={classes.tank}
+            aria-label={t(`${konfig.navn}: ${prosent} prosent`, `${konfig.navnEn}: ${prosent} percent`)}
+          >
             <div className={classes.vaeske} style={{ height: `${verdi}%` }}>
               <div className={classes.boelge} />
               <span className={classes.boble} style={{ left: '20%', animationDelay: '0s' }} />
@@ -68,11 +75,11 @@ export function TommingModal({ aktiv, verdi, onAvbryt }: Props) {
           </div>
 
           <Text fw={800} fz="lg" ta="center" mih={54}>
-            {underveis(verdi)}
+            {underveis(verdi, t)}
           </Text>
 
           <Button variant="subtle" color="gray" onClick={onAvbryt}>
-            Løp tilbake til pulten nå
+            {t('Løp tilbake til pulten nå', 'Run back to your desk now')}
           </Button>
         </Stack>
       )}

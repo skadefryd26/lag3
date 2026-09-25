@@ -6,18 +6,24 @@ export type Sakmal = {
   emoji: string;
   kunde: string;
   beskrivelse: string;
+  beskrivelseEn: string;
   sporsmal: string;
+  sporsmalEn: string;
   /** Nøyaktig tre svaralternativer. */
   svar: [string, string, string];
+  /** Engelske svaralternativer, samme rekkefølge som svar. */
+  svarEn: [string, string, string];
   /** Indeksen til riktig svar i `svar`. */
   riktig: number;
 };
 
 /** En sak som ligger på skrivebordet akkurat nå. */
-export type Sak = Omit<Sakmal, 'svar' | 'riktig'> & {
+export type Sak = Omit<Sakmal, 'svar' | 'svarEn' | 'riktig'> & {
   id: number;
   /** Svaralternativene i blandet rekkefølge. */
   svar: string[];
+  /** Engelske svaralternativer, samme (blandede) rekkefølge som svar. */
+  svarEn: string[];
   riktig: number;
   /** Tidspunkt (performance.now) da kunden går lei. */
   frist: number;

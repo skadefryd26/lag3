@@ -3,6 +3,7 @@ import { MAALER_ETTER_ID, alvorlighet } from '../../data/maalere';
 import type { MaalerId, TiltakResultat } from '../../types/skadeko.types';
 import classes from '../Skadeko.module.css';
 import { TILTAK_SPILL } from './registry';
+import { useSprak } from '../../../../sprak';
 
 type Props = {
   /** Hvilken måler tiltaket gjelder. Null = ingenting er åpent. */
@@ -23,6 +24,7 @@ type Props = {
 export function TiltakModal({ aktiv, verdi, onFerdig, onLukk }: Props) {
   const konfig = aktiv ? MAALER_ETTER_ID[aktiv] : null;
   const Spill = aktiv ? TILTAK_SPILL[aktiv] : undefined;
+  const { t } = useSprak();
 
   return (
     <Modal
@@ -39,10 +41,10 @@ export function TiltakModal({ aktiv, verdi, onFerdig, onLukk }: Props) {
               {konfig.emoji}
             </Text>
             <Text fw={800} fz="lg">
-              {konfig.tiltakTittel}
+              {t(konfig.tiltakTittel, konfig.tiltakTittelEn)}
             </Text>
             <Badge variant="light" color="gray" size="sm">
-              Skadekøen står stille
+              {t('Skadekøen står stille', 'The claims queue is paused')}
             </Badge>
           </Group>
         )
@@ -53,7 +55,7 @@ export function TiltakModal({ aktiv, verdi, onFerdig, onLukk }: Props) {
           <Stack gap={6}>
             <Group justify="space-between">
               <Text fz="sm" c="dimmed" fw={600}>
-                {konfig.navn} nå
+                {t(`${konfig.navn} nå`, `${konfig.navnEn} now`)}
               </Text>
               <Text fz="sm" fw={800}>
                 {Math.round(verdi)}%
@@ -74,7 +76,7 @@ export function TiltakModal({ aktiv, verdi, onFerdig, onLukk }: Props) {
               🤖
             </Text>
             <Text fz="sm" c="dimmed" fs="italic">
-              {konfig.bjarneKommentar}
+              {t(konfig.bjarneKommentar, konfig.bjarneKommentarEn)}
             </Text>
           </Group>
 
@@ -85,12 +87,15 @@ export function TiltakModal({ aktiv, verdi, onFerdig, onLukk }: Props) {
             />
           ) : (
             <Plassholder
-              beskrivelse={konfig.tiltakBeskrivelse}
-              knapp={konfig.knapp}
+              beskrivelse={t(konfig.tiltakBeskrivelse, konfig.tiltakBeskrivelseEn)}
+              knapp={t(konfig.knapp, konfig.knappEn)}
               onFerdig={() =>
                 onFerdig(konfig.id, {
                   endring: 35,
-                  melding: `${konfig.knapp} — midlertidig effekt, minispillet kommer.`,
+                  melding: t(
+                    `${konfig.knapp} — midlertidig effekt, minispillet kommer.`,
+                    `${konfig.knappEn} — temporary effect, the mini-game is coming.`,
+                  ),
                 })
               }
               onLukk={onLukk}
@@ -114,28 +119,31 @@ type PlassholderProps = {
  * pausen og påvirkningen av måleren henger sammen.
  */
 function Plassholder({ beskrivelse, knapp, onFerdig, onLukk }: PlassholderProps) {
+  const { t } = useSprak();
   return (
     <Stack gap="md">
       <Alert
         color="violet"
         variant="light"
         radius="md"
-        title="Minispillet er ikke laget ennå"
+        title={t('Minispillet er ikke laget ennå', 'The mini-game has not been made yet')}
         className={classes.plassholder}
       >
         <Text fz="sm">{beskrivelse}</Text>
         <Text fz="xs" c="dimmed" mt={6}>
-          Knappen under gir en midlertidig effekt, så dere kan se at resten
-          henger sammen.
+          {t(
+            'Knappen under gir en midlertidig effekt, så dere kan se at resten henger sammen.',
+            'The button below gives a temporary effect, so you can see that the rest fits together.',
+          )}
         </Text>
       </Alert>
 
       <Group justify="flex-end">
         <Button variant="subtle" color="gray" onClick={onLukk}>
-          Tilbake til skrivebordet
+          {t('Tilbake til skrivebordet', 'Back to the desk')}
         </Button>
         <Button color="teal" onClick={onFerdig}>
-          {knapp} (midlertidig)
+          {knapp} {t('(midlertidig)', '(temporary)')}
         </Button>
       </Group>
     </Stack>

@@ -8,6 +8,10 @@ export type MedarbeidersamtaleRequest = {
   sekunderSpilt: number;
   /** Hvorfor arbeidsdagen tok slutt. */
   aarsak: string;
+  /** Språket Bjarne skal svare på. */
+  sprak: 'no' | 'en';
+  /** Spilleren har kjøpt forfremmelse: spilleren er sjefen, Bjarne er skadebehandler. */
+  sjef: boolean;
 };
 
 export type MedarbeidersamtaleResponse = {
