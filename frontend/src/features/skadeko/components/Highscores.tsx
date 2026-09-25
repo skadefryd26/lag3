@@ -1,5 +1,6 @@
-import { Button, Group, Modal, Stack, Table, Text, TextInput } from '@mantine/core';
-import { useState } from 'react';
+import { Button, Group, Modal, SegmentedControl, Stack, Table, Text, TextInput } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import { GRAD_ETTER_ID, VANSKELIGHETSGRADER, erGrad, type VanskelighetsgradId } from '../data/vanskelighetsgrader';
 import type { Highscore } from '../hooks/useHighscores';
 
 const MEDALJER = ['🥇', '🥈', '🥉'];
@@ -7,12 +8,19 @@ const MEDALJER = ['🥇', '🥈', '🥉'];
 type ListeProps = {
   apen: boolean;
   onLukk: () => void;
-  liste: Highscore[];
+  listeFor: (grad: VanskelighetsgradId) => Highscore[];
+  /** Graden som vises når vinduet åpnes. */
+  startGrad: VanskelighetsgradId;
   nullstillesPa: Date;
 };
 
-/** Topp 10-lista, vist i et vindu over spillet. */
-export function Highscores({ apen, onLukk, liste, nullstillesPa }: ListeProps) {
+/** Topp 10-lista per vanskelighetsgrad, vist i et vindu over spillet. */
+export function Highscores({ apen, onLukk, listeFor, startGrad, nullstillesPa }: ListeProps) {
+  const [grad, setGrad] = useState(startGrad);
+  useEffect(() => {
+    if (apen) setGrad(startGrad);
+  }, [apen, startGrad]);
+  const liste = listeFor(grad);
   const dager = Math.max(1, Math.ceil((nullstillesPa.getTime() - Date.now()) / 86_400_000));
   return (
     <Modal opened={apen} onClose={onLukk} title="🏆 Poengtavle — ukens mest effektive" centered radius="lg">
@@ -21,9 +29,16 @@ export function Highscores({ apen, onLukk, liste, nullstillesPa }: ListeProps) {
         {nullstillesPa.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' })}
         ). Bjarne liker ikke å bli minnet på gamle prestasjoner.
       </Text>
+      <SegmentedControl
+        fullWidth
+        mb="sm"
+        value={grad}
+        onChange={(v) => erGrad(v) && setGrad(v)}
+        data={VANSKELIGHETSGRADER.map((g) => ({ value: g.id, label: `${g.emoji} ${g.navn}` }))}
+      />
       {liste.length === 0 ? (
         <Text c="dimmed" ta="center" py="lg">
-          Ingen på tavla ennå. Bjarne er ikke overrasket.
+          Ingen på {GRAD_ETTER_ID[grad].navn.toLowerCase()}tavla ennå. Bjarne er ikke overrasket.
         </Text>
       ) : (
         <Table striped highlightOnHover verticalSpacing="xs">

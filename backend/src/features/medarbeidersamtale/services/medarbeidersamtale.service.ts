@@ -20,6 +20,7 @@ export function byggRapport(stats: MedarbeidersamtaleRequest): string {
 
   return `Dagsrapport fra skadekøen:
 
+Stilling (vanskelighetsgrad spilleren valgte): ${stats.stilling}
 Hvorfor dagen tok slutt: ${stats.aarsak}
 Arbeidsdagens lengde: ${varighet}
 Saker behandlet: ${stats.behandlet}

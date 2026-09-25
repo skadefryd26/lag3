@@ -8,6 +8,8 @@ export type MedarbeidersamtaleRequest = {
   sekunderSpilt: number;
   /** Hvorfor arbeidsdagen tok slutt. */
   aarsak: string;
+  /** Stillingen spilleren valgte: Vikar, Fulltid eller Senior. */
+  stilling: string;
 };
 
 export type MedarbeidersamtaleResponse = {
