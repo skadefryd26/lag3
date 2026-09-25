@@ -92,7 +92,9 @@ export function useMaalere(aktiv: boolean) {
 
     const tick = (na: number) => {
       if (sist.current === 0) sist.current = na;
-      const sekunder = (na - sist.current) / 1000;
+      // Maks et kvart sekund per frame: kommer du tilbake fra en annen fane,
+      // skal ikke hele fraværet slå inn på én gang.
+      const sekunder = Math.min(0.25, (na - sist.current) / 1000);
       sist.current = na;
 
       if (sekunder > 0) {

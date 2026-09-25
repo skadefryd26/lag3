@@ -125,6 +125,7 @@ export function Skadeko() {
     nullstill();
     if (kjopt.includes('kaffe')) settDriftFaktor('energi', 0.5);
     if (kjopt.includes('stressball')) settDriftFaktor('stress', 0.5);
+    if (kjopt.includes('blaerekapasitet')) settDriftFaktor('blaere', 0.5);
     setAktive(kjopt);
     setKjopt([]);
     spill.startDagen(grad);
@@ -141,7 +142,7 @@ export function Skadeko() {
   }, [nullstill, spill]);
   const spoerOmUt = useCallback(() => {
     if (spill.tilstand !== 'spiller') return tilStart();
-    const pausetAvOss = !spill.pauset;
+    const pausetAvOss = !spill.erPauset();
     if (pausetAvOss) spill.pause();
     setBekreftUt({ pausetAvOss });
   }, [spill, tilStart]);
@@ -149,6 +150,24 @@ export function Skadeko() {
     if (bekreftUt?.pausetAvOss) spill.fortsett();
     setBekreftUt(null);
   }, [bekreftUt, spill]);
+
+  // Sidemenyen dekker pulten, så køen står stille mens den er åpen.
+  // Vi gjenopptar bare en pause menyen selv satte.
+  const menyPauset = useRef(false);
+  const apneMeny = useCallback(() => {
+    if (spill.tilstand === 'spiller' && !spill.erPauset()) {
+      spill.pause();
+      menyPauset.current = true;
+    }
+    setVisMeny(true);
+  }, [spill]);
+  const lukkMeny = useCallback(() => {
+    setVisMeny(false);
+    if (menyPauset.current) {
+      menyPauset.current = false;
+      spill.fortsett();
+    }
+  }, [spill]);
 
   return (
     <Box mih="100vh" bg="light-dark(#f1f3f5, var(--mantine-color-dark-7))">
@@ -175,7 +194,7 @@ export function Skadeko() {
             tommes={tommes}
             onTiltak={spill.tilstand === 'spiller' ? apneTiltak : null}
             menyApen={visMeny}
-            onMeny={() => setVisMeny((v) => !v)}
+            onMeny={() => (visMeny ? lukkMeny() : apneMeny())}
           />
         </Container>
       </Box>
@@ -323,7 +342,7 @@ export function Skadeko() {
 
       <Sidemeny
         apen={visMeny}
-        onLukk={() => setVisMeny(false)}
+        onLukk={lukkMeny}
         onNyDag={nyDag}
         onTilStart={spoerOmUt}
         onVisHighscores={() => {

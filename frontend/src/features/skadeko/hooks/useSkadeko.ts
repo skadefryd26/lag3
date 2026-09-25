@@ -291,15 +291,15 @@ export function useSkadeko() {
           `Wrong! −${TREKK_FEIL_SVAR} and −1 life. The right answer was: ${sak.svarEn[sak.riktig]}`,
         ),
       });
-      if (taptRef.current + feilRef.current >= LIV) {
-        avsluttDagen(tomForLivTekst(taptRef.current, feilRef.current));
-        return;
-      }
     }
 
+    // Oppdateres før en eventuell slutt på dagen, så butikken viser riktig saldo.
     setCombo(comboRef.current);
     setBehandlet(behandletRef.current);
     setPoeng(poengRef.current);
+    if (valg !== sak.riktig && taptRef.current + feilRef.current >= LIV) {
+      avsluttDagen(tomForLivTekst(taptRef.current, feilRef.current));
+    }
   }, [avsluttDagen]);
 
   /** Starter en ny arbeidsdag på valgt vanskelighetsgrad. */
@@ -365,6 +365,9 @@ export function useSkadeko() {
     frame.current = requestAnimationFrame(tick);
   }, [tick]);
 
+  /** Om køen står stille akkurat nå — leser ref-en, så svaret er ferskt også midt i et klikk. */
+  const erPauset = useCallback(() => pausetPa.current !== 0, []);
+
   /** Trekker poeng for et kjøp i butikken. Returnerer false hvis det ikke er nok poeng. */
   const brukPoeng = useCallback((pris: number) => {
     if (poengRef.current < pris) return false;
@@ -388,12 +391,21 @@ export function useSkadeko() {
     setTilstand('ikke-startet');
   }, []);
 
-  // Pause nedtellingen når fanen ikke er synlig.
+  // Pause nedtellingen når fanen ikke er synlig — men gjenoppta bare en pause
+  // vi satte selv, ellers starter køen bak et åpent tiltak eller butikken.
+  const pausetAvFane = useRef(false);
   useEffect(() => {
     const vedBytte = () => {
       if (!kjorer.current) return;
-      if (document.hidden) pause();
-      else fortsett();
+      if (document.hidden) {
+        if (pausetPa.current === 0) {
+          pause();
+          pausetAvFane.current = true;
+        }
+      } else if (pausetAvFane.current) {
+        pausetAvFane.current = false;
+        fortsett();
+      }
     };
     document.addEventListener('visibilitychange', vedBytte);
     return () => document.removeEventListener('visibilitychange', vedBytte);
@@ -426,6 +438,7 @@ export function useSkadeko() {
     svarPaSak,
     pause,
     fortsett,
+    erPauset,
     brukPoeng,
     liv: LIV,
     livIgjen: Math.max(0, LIV - tapt - feil),
