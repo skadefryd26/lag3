@@ -9,6 +9,7 @@ import classes from './Skadeko.module.css';
 type Props = {
   resultat: Dagsresultat;
   onNyDag: () => void;
+  onTilStart: () => void;
   /** Navne-innmelding til highscore-lista, når poengsummen er god nok. */
   highscore?: ReactNode;
   /** Lar spilleren bytte stilling før neste arbeidsdag. */
@@ -16,7 +17,7 @@ type Props = {
 };
 
 /** Bjarne leser dagsrapporten og er uimponert. Ett kall til AI-gatewayen. */
-export function Medarbeidersamtale({ resultat, onNyDag, highscore, gradvelger }: Props) {
+export function Medarbeidersamtale({ resultat, onNyDag, onTilStart, highscore, gradvelger }: Props) {
   const { data, error, isPending, isError, refetch, isFetching } = useQuery({
     // Ny arbeidsdag = ny samtale. Tallene er nøkkelen.
     queryKey: ['medarbeidersamtale', resultat],
@@ -76,6 +77,9 @@ export function Medarbeidersamtale({ resultat, onNyDag, highscore, gradvelger }:
         <Group>
           <Button size="md" onClick={onNyDag} color="teal">
             Ny arbeidsdag 🔁
+          </Button>
+          <Button size="md" variant="default" onClick={onTilStart}>
+            Til startsiden
           </Button>
           {isError && (
             <Button size="md" variant="subtle" onClick={() => refetch()}>

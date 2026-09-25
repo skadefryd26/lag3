@@ -1,4 +1,4 @@
-import { Button, Group, Modal, SegmentedControl, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Alert, Button, Group, Loader, Modal, SegmentedControl, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { GRAD_ETTER_ID, VANSKELIGHETSGRADER, erGrad, type VanskelighetsgradId } from '../data/vanskelighetsgrader';
 import type { Highscore } from '../hooks/useHighscores';
@@ -12,10 +12,12 @@ type ListeProps = {
   /** Graden som vises når vinduet åpnes. */
   startGrad: VanskelighetsgradId;
   nullstillesPa: Date;
+  laster: boolean;
+  feil: boolean;
 };
 
 /** Topp 10-lista per vanskelighetsgrad, vist i et vindu over spillet. */
-export function Highscores({ apen, onLukk, listeFor, startGrad, nullstillesPa }: ListeProps) {
+export function Highscores({ apen, onLukk, listeFor, startGrad, nullstillesPa, laster, feil }: ListeProps) {
   const [grad, setGrad] = useState(startGrad);
   useEffect(() => {
     if (apen) setGrad(startGrad);
@@ -36,7 +38,15 @@ export function Highscores({ apen, onLukk, listeFor, startGrad, nullstillesPa }:
         onChange={(v) => erGrad(v) && setGrad(v)}
         data={VANSKELIGHETSGRADER.map((g) => ({ value: g.id, label: `${g.emoji} ${g.navn}` }))}
       />
-      {liste.length === 0 ? (
+      {feil ? (
+        <Alert color="orange" title="Fikk ikke hentet poengtavla">
+          Bjarne har lagt den et sted. Sjekk nettet og prøv igjen.
+        </Alert>
+      ) : laster ? (
+        <Group justify="center" py="lg">
+          <Loader size="sm" />
+        </Group>
+      ) : liste.length === 0 ? (
         <Text c="dimmed" ta="center" py="lg">
           Ingen på {GRAD_ETTER_ID[grad].navn.toLowerCase()}tavla ennå. Bjarne er ikke overrasket.
         </Text>
@@ -51,7 +61,7 @@ export function Highscores({ apen, onLukk, listeFor, startGrad, nullstillesPa }:
           </Table.Thead>
           <Table.Tbody>
             {liste.map((h, i) => (
-              <Table.Tr key={`${h.navn}-${h.dato}`}>
+              <Table.Tr key={`${i}-${h.navn}-${h.poeng}`}>
                 <Table.Td fw={700}>{MEDALJER[i] ?? i + 1}</Table.Td>
                 <Table.Td>{h.navn}</Table.Td>
                 <Table.Td ta="right" fw={800}>
@@ -68,13 +78,15 @@ export function Highscores({ apen, onLukk, listeFor, startGrad, nullstillesPa }:
 
 type InnmeldingProps = {
   poeng: number;
-  onLagre: (navn: string) => void;
+  onLagre: (navn: string) => Promise<void>;
 };
 
 /** Vises etter endt dag når poengsummen er god nok for lista. */
 export function HighscoreInnmelding({ poeng, onLagre }: InnmeldingProps) {
   const [navn, setNavn] = useState('');
   const [lagret, setLagret] = useState(false);
+  const [lagrer, setLagrer] = useState(false);
+  const [feil, setFeil] = useState(false);
 
   if (lagret) {
     return (
@@ -86,11 +98,19 @@ export function HighscoreInnmelding({ poeng, onLagre }: InnmeldingProps) {
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        if (!navn.trim()) return;
-        onLagre(navn);
-        setLagret(true);
+        if (!navn.trim() || lagrer) return;
+        setLagrer(true);
+        setFeil(false);
+        try {
+          await onLagre(navn);
+          setLagret(true);
+        } catch {
+          setFeil(true);
+        } finally {
+          setLagrer(false);
+        }
       }}
     >
       <Stack gap="xs" p="md" style={{ borderRadius: 12, background: 'rgba(250, 176, 5, 0.12)' }}>
@@ -105,10 +125,15 @@ export function HighscoreInnmelding({ poeng, onLagre }: InnmeldingProps) {
             onChange={(e) => setNavn(e.currentTarget.value)}
             style={{ flex: 1, minWidth: 180 }}
           />
-          <Button type="submit" color="yellow" c="dark" disabled={!navn.trim()}>
+          <Button type="submit" color="yellow" c="dark" disabled={!navn.trim()} loading={lagrer}>
             Legg til
           </Button>
         </Group>
+        {feil && (
+          <Text fz="sm" c="red.7">
+            Fikk ikke lagret. Sjekk nettet og prøv igjen.
+          </Text>
+        )}
       </Stack>
     </form>
   );

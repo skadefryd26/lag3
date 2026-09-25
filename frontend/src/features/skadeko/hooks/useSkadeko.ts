@@ -337,6 +337,21 @@ export function useSkadeko() {
     frame.current = requestAnimationFrame(tick);
   }, [tick]);
 
+  /** Stempler ut uten å fullføre dagen: ingen rapport, ingen poengtavle. */
+  const gaaTilStart = useCallback(() => {
+    kjorer.current = false;
+    pausetPa.current = 0;
+    cancelAnimationFrame(frame.current);
+    sakerRef.current = [];
+    setSaker([]);
+    setAapenId(null);
+    setPauset(false);
+    setResultat(null);
+    setTilbakemelding(null);
+    setTapsmelding(null);
+    setTilstand('ikke-startet');
+  }, []);
+
   // Pause nedtellingen når fanen ikke er synlig.
   useEffect(() => {
     const vedBytte = () => {
@@ -368,6 +383,7 @@ export function useSkadeko() {
     aapenSak,
     resultat,
     startDagen,
+    gaaTilStart,
     tapDagen,
     apneSak,
     lukkSak,
