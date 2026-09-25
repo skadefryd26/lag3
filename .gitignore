@@ -14,8 +14,14 @@ node_modules/
 dist/
 coverage/
 
+# Vite sin lokale cache
+.vite/
+
 # Skjermbildet scripts/sjekk-appen.mjs legger igjen
 sjekk-appen.png
+
+# Firebase CLI sin lokale cache
+.firebase/
 
 # Mellomsteget lagark.py lager før PDF-en
 arrangor/lagark/lagark.html

@@ -1,0 +1,24 @@
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "europe-north1",
+    "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": "frontend/dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "predeploy": [
+      "npm run build:firebase -w frontend"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

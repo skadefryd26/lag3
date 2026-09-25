@@ -4,11 +4,12 @@ type Props = {
   apen: boolean;
   onLukk: () => void;
   onNyDag: () => void;
+  onTilStart: () => void;
   onVisHighscores: () => void;
 };
 
 /** Sidemenyen som glir inn fra venstre. Resten av siden blir uskarp bak den. */
-export function Sidemeny({ apen, onLukk, onNyDag, onVisHighscores }: Props) {
+export function Sidemeny({ apen, onLukk, onNyDag, onTilStart, onVisHighscores }: Props) {
   const velg = (handling: () => void) => () => {
     onLukk();
     handling();
@@ -29,6 +30,7 @@ export function Sidemeny({ apen, onLukk, onNyDag, onVisHighscores }: Props) {
       radius="md"
     >
       <Stack gap={4}>
+        <NavLink label="Startsiden" leftSection="🏠" onClick={velg(onTilStart)} />
         <NavLink label="Ny arbeidsdag" leftSection="☕" onClick={velg(onNyDag)} />
         <NavLink label="Poengtavle" leftSection="🏆" onClick={velg(onVisHighscores)} />
         <NavLink

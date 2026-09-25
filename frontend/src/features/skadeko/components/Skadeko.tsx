@@ -1,6 +1,6 @@
-import { IconCircleFilled, IconClockPlay, IconFlame } from '@tabler/icons-react';
+import { IconCircleFilled, IconClockPlay, IconDoorExit, IconFlame } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
+import { Badge, Box, Button, Container, Group, Modal, Notification, Paper, Stack, Text, Title } from '@mantine/core';
 import { GradVelger } from './GradVelger';
 import { Highscores, HighscoreInnmelding } from './Highscores';
 import { Sidemeny } from './Sidemeny';
@@ -74,9 +74,12 @@ export function Skadeko() {
 
   // Holder innmeldingen synlig (med «du er på lista») etter at navnet er lagret.
   const [lagretNa, setLagretNa] = useState(false);
+  // Ferske tall når dagen er over, så «kom du på lista?» sjekkes mot det andre har levert.
+  const { oppdater: oppdaterHighscores } = highscores;
   useEffect(() => {
     if (spill.tilstand === 'spiller') setLagretNa(false);
-  }, [spill.tilstand]);
+    if (spill.tilstand === 'ferdig') oppdaterHighscores();
+  }, [spill.tilstand, oppdaterHighscores]);
 
   const apneTiltak = useCallback(
     (id: MaalerId) => {
@@ -113,6 +116,26 @@ export function Skadeko() {
     nullstill();
     spill.startDagen(grad);
   }, [nullstill, spill, grad]);
+
+  /** Tilbake til startsiden. Midt i en dag spør vi først, og køen står stille imens. */
+  const [bekreftUt, setBekreftUt] = useState<{ pausetAvOss: boolean } | null>(null);
+  const tilStart = useCallback(() => {
+    setBekreftUt(null);
+    setAktivtTiltak(null);
+    setTiltakskvittering(null);
+    nullstill();
+    spill.gaaTilStart();
+  }, [nullstill, spill]);
+  const spoerOmUt = useCallback(() => {
+    if (spill.tilstand !== 'spiller') return tilStart();
+    const pausetAvOss = !spill.pauset;
+    if (pausetAvOss) spill.pause();
+    setBekreftUt({ pausetAvOss });
+  }, [spill, tilStart]);
+  const bliVedPulten = useCallback(() => {
+    if (bekreftUt?.pausetAvOss) spill.fortsett();
+    setBekreftUt(null);
+  }, [bekreftUt, spill]);
 
   return (
     <Box mih="100vh" bg="#f1f3f5">
@@ -189,7 +212,7 @@ export function Skadeko() {
               </Stack>
 
               <Text fw={700} ta="center">
-                Lykke til. Innboksen venter allerede. 📥😈
+                Lykke til. Innboksen venter allerede.
               </Text>
 
               <Button
@@ -216,11 +239,21 @@ export function Skadeko() {
                 <Badge color="yellow" variant="light" leftSection={<IconCircleFilled size={8} />}>Middels · 20p</Badge>
                 <Badge color="red" variant="light" leftSection={<IconCircleFilled size={8} />}>Kompleks · 30p · kort tid</Badge>
               </Group>
-              {spill.combo >= 2 && (
-                <Badge color="orange" size="lg" variant="filled" leftSection={<IconFlame size={16} />}>
-                  Combo x{spill.combo}
-                </Badge>
-              )}
+              <Group gap="xs">
+                {spill.combo >= 2 && (
+                  <Badge color="orange" size="lg" variant="filled" leftSection={<IconFlame size={16} />}>
+                    Combo x{spill.combo}
+                  </Badge>
+                )}
+                <Button
+                  size="xs"
+                  variant="default"
+                  leftSection={<IconDoorExit size={16} />}
+                  onClick={spoerOmUt}
+                >
+                  Stemple ut
+                </Button>
+              </Group>
             </Group>
             <div className={classes.skrivebord} aria-live="polite">
               {spill.saker.length === 0 ? (
@@ -238,6 +271,7 @@ export function Skadeko() {
           <Medarbeidersamtale
             resultat={spill.resultat}
             onNyDag={nyDag}
+            onTilStart={tilStart}
             gradvelger={<GradVelger verdi={grad} onEndre={setGrad} />}
             highscore={
               highscores.kvalifiserer(spill.resultat.poeng, spill.resultat.vanskelighetsgrad) || lagretNa
@@ -245,9 +279,9 @@ export function Skadeko() {
                     <HighscoreInnmelding
                       key={spill.resultat.sekunderSpilt + '-' + spill.resultat.poeng}
                       poeng={spill.resultat.poeng}
-                      onLagre={(navn) => {
+                      onLagre={async (navn) => {
+                        await highscores.leggTil(navn, spill.resultat!.poeng, spill.resultat!.vanskelighetsgrad);
                         setLagretNa(true);
-                        highscores.leggTil(navn, spill.resultat!.poeng, spill.resultat!.vanskelighetsgrad);
                       }}
                     />
                   )
@@ -263,17 +297,43 @@ export function Skadeko() {
         listeFor={highscores.listeFor}
         startGrad={spill.resultat?.vanskelighetsgrad ?? grad}
         nullstillesPa={highscores.nullstillesPa}
+        laster={highscores.laster}
+        feil={highscores.feil}
       />
 
       <Sidemeny
         apen={visMeny}
         onLukk={() => setVisMeny(false)}
         onNyDag={nyDag}
+        onTilStart={spoerOmUt}
         onVisHighscores={() => {
           highscores.oppdater();
           setVisHighscores(true);
         }}
       />
+
+      <Modal
+        opened={bekreftUt !== null}
+        onClose={bliVedPulten}
+        title="Stemple ut før dagen er over?"
+        centered
+        radius="lg"
+      >
+        <Stack gap="md">
+          <Text>
+            Dagen blir ikke lagret, og du kommer ikke på poengtavla. Bjarne kommer til å legge merke
+            til at pulten er tom.
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={bliVedPulten}>
+              Bli ved pulten
+            </Button>
+            <Button color="red" leftSection={<IconDoorExit size={16} />} onClick={tilStart}>
+              Gå til startsiden
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
 
       <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
       <TeamsPopup meldinger={teams.meldinger} onLukk={teams.lukk} />
