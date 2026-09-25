@@ -52,10 +52,18 @@ medarbeidersamtaleRouter.post<
   }
 });
 
+/** Oversetter spillets id til det Bjarne kaller stillingen. */
+const STILLINGER: Record<string, string> = {
+  vikar: 'Vikar',
+  fulltid: 'Fulltid',
+  senior: 'Senior',
+};
+
 function valider(
   body: Partial<MedarbeidersamtaleRequest>,
 ): MedarbeidersamtaleRequest | null {
-  const { poeng, behandlet, tapt, tittel, tapteSaker, sekunderSpilt, aarsak } = body;
+  const { poeng, behandlet, tapt, tittel, tapteSaker, sekunderSpilt, aarsak, vanskelighetsgrad } =
+    body as Partial<MedarbeidersamtaleRequest> & { vanskelighetsgrad?: unknown };
 
   if (
     typeof poeng !== 'number' ||
@@ -78,6 +86,10 @@ function valider(
     aarsak: typeof aarsak === 'string' ? aarsak.slice(0, 120) : 'Ukjent',
     sprak: body.sprak === 'en' ? 'en' : 'no',
     sjef: (body as { sjef?: unknown }).sjef === true,
+    stilling:
+      typeof vanskelighetsgrad === 'string' && Object.hasOwn(STILLINGER, vanskelighetsgrad)
+        ? STILLINGER[vanskelighetsgrad]
+        : 'Ukjent',
     // Kort liste, korte strenger — ingenting brukeren har skrevet selv havner her.
     tapteSaker: tapteSaker.filter((s): s is string => typeof s === 'string').slice(0, 20),
   };

@@ -1,6 +1,7 @@
-import { IconCircleFilled, IconClockPlay, IconFlame } from '@tabler/icons-react';
+import { IconCircleFilled, IconClockPlay, IconDoorExit, IconFlame } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Badge, Box, Button, Container, Group, Notification, Paper, Stack, Text, Title } from '@mantine/core';
+import { Badge, Box, Button, Container, Group, Modal, Notification, Paper, Stack, Text, Title } from '@mantine/core';
+import { GradVelger } from './GradVelger';
 import { Highscores, HighscoreInnmelding } from './Highscores';
 import { Sidemeny } from './Sidemeny';
 import { Butikk } from './Butikk';
@@ -14,11 +15,24 @@ import { TiltakModal } from './tiltak/TiltakModal';
 import { TommingModal } from './tiltak/TommingModal';
 import { MAALERE, MAALER_ETTER_ID, iKrise } from '../data/maalere';
 import { useMaalere } from '../hooks/useMaalere';
-import { MAKS_LEVEL, useSkadeko } from '../hooks/useSkadeko';
+import { GRAD_ETTER_ID, STANDARD_GRAD, erGrad, type VanskelighetsgradId } from '../data/vanskelighetsgrader';
+import { useSkadeko } from '../hooks/useSkadeko';
 import { useTeamsForstyrrelser } from '../hooks/useTeamsForstyrrelser';
 import type { MaalerId, TiltakResultat } from '../types/skadeko.types';
 import classes from './Skadeko.module.css';
 import { useSprak } from '../../../sprak';
+
+const GRAD_NOKKEL = 'skadeko-vanskelighetsgrad';
+
+/** Husker sist valgte grad på denne maskinen. */
+function lesGrad(): VanskelighetsgradId {
+  try {
+    const lagret = localStorage.getItem(GRAD_NOKKEL);
+    return erGrad(lagret) ? lagret : STANDARD_GRAD;
+  } catch {
+    return STANDARD_GRAD;
+  }
+}
 
 export function Skadeko() {
   const spill = useSkadeko();
@@ -36,6 +50,15 @@ export function Skadeko() {
   const [visButikk, setVisButikk] = useState(false);
   const [aktivtTiltak, setAktivtTiltak] = useState<MaalerId | null>(null);
   const [tiltakskvittering, setTiltakskvittering] = useState<string | null>(null);
+  const [grad, setGradState] = useState<VanskelighetsgradId>(lesGrad);
+  const setGrad = useCallback((ny: VanskelighetsgradId) => {
+    setGradState(ny);
+    try {
+      localStorage.setItem(GRAD_NOKKEL, ny);
+    } catch {
+      // Uten lagring husker vi bare valget til siden lastes på nytt.
+    }
+  }, []);
 
   const { maalere, paavirk, nullstill, tommes, startTomming, stoppTomming, settDriftFaktor } = useMaalere(vedSkrivebordet);
 
@@ -59,9 +82,12 @@ export function Skadeko() {
 
   // Holder innmeldingen synlig (med «du er på lista») etter at navnet er lagret.
   const [lagretNa, setLagretNa] = useState(false);
+  // Ferske tall når dagen er over, så «kom du på lista?» sjekkes mot det andre har levert.
+  const { oppdater: oppdaterHighscores } = highscores;
   useEffect(() => {
     if (spill.tilstand === 'spiller') setLagretNa(false);
-  }, [spill.tilstand]);
+    if (spill.tilstand === 'ferdig') oppdaterHighscores();
+  }, [spill.tilstand, oppdaterHighscores]);
 
   const apneTiltak = useCallback(
     (id: MaalerId) => {
@@ -92,23 +118,37 @@ export function Skadeko() {
   );
 
   /** Alt som må nullstilles når en ny arbeidsdag begynner. */
-  const startDag = useCallback(
-    (level?: number) => {
-      setAktivtTiltak(null);
-      setTiltakskvittering(null);
-      // Det som ble kjøpt i går, virker i dag.
-      nullstill();
-      if (kjopt.includes('kaffe')) settDriftFaktor('energi', 0.5);
-      if (kjopt.includes('stressball')) settDriftFaktor('stress', 0.5);
-      setAktive(kjopt);
-      setKjopt([]);
-      spill.startDagen(level);
-    },
-    [nullstill, settDriftFaktor, kjopt, spill],
-  );
-  const nyDag = useCallback(() => startDag(), [startDag]);
-  /** Til testing og demo: hopp rett til det vanskeligste levelet. */
-  const testMaksLevel = useCallback(() => startDag(MAKS_LEVEL), [startDag]);
+  const nyDag = useCallback(() => {
+    setAktivtTiltak(null);
+    setTiltakskvittering(null);
+    // Det som ble kjøpt i går, virker i dag.
+    nullstill();
+    if (kjopt.includes('kaffe')) settDriftFaktor('energi', 0.5);
+    if (kjopt.includes('stressball')) settDriftFaktor('stress', 0.5);
+    setAktive(kjopt);
+    setKjopt([]);
+    spill.startDagen(grad);
+  }, [nullstill, settDriftFaktor, kjopt, spill, grad]);
+
+  /** Tilbake til startsiden. Midt i en dag spør vi først, og køen står stille imens. */
+  const [bekreftUt, setBekreftUt] = useState<{ pausetAvOss: boolean } | null>(null);
+  const tilStart = useCallback(() => {
+    setBekreftUt(null);
+    setAktivtTiltak(null);
+    setTiltakskvittering(null);
+    nullstill();
+    spill.gaaTilStart();
+  }, [nullstill, spill]);
+  const spoerOmUt = useCallback(() => {
+    if (spill.tilstand !== 'spiller') return tilStart();
+    const pausetAvOss = !spill.pauset;
+    if (pausetAvOss) spill.pause();
+    setBekreftUt({ pausetAvOss });
+  }, [spill, tilStart]);
+  const bliVedPulten = useCallback(() => {
+    if (bekreftUt?.pausetAvOss) spill.fortsett();
+    setBekreftUt(null);
+  }, [bekreftUt, spill]);
 
   return (
     <Box mih="100vh" bg="light-dark(#f1f3f5, var(--mantine-color-dark-7))">
@@ -184,6 +224,11 @@ export function Skadeko() {
                 </Text>
               </Stack>
 
+              <Stack gap={6}>
+                <Text fw={700}>{t('Velg stilling', 'Choose your position')}</Text>
+                <GradVelger verdi={grad} onEndre={setGrad} />
+              </Stack>
+
               <Text fw={700} ta="center">
                 {t('Lykke til. Innboksen venter allerede. 📥😈', 'Good luck. The inbox is already waiting. 📥😈')}
               </Text>
@@ -197,15 +242,6 @@ export function Skadeko() {
               >
                 {t('Stemple inn', 'Clock in')}
               </Button>
-              <Button
-                variant="subtle"
-                color="gray"
-                size="xs"
-                onClick={testMaksLevel}
-                style={{ alignSelf: 'center' }}
-              >
-                {t('Test level', 'Test level')} {MAKS_LEVEL}
-              </Button>
             </Stack>
           </Paper>
         )}
@@ -214,15 +250,28 @@ export function Skadeko() {
           <Stack gap="sm">
             <Group justify="space-between">
               <Group gap="xs">
+                <Badge color="violet" variant="filled">
+                  {GRAD_ETTER_ID[spill.grad].emoji} {GRAD_ETTER_ID[spill.grad].navn}
+                </Badge>
                 <Badge color="green" variant="light" leftSection={<IconCircleFilled size={8} />}>{t('Enkel · 10p · god tid', 'Easy · 10p · plenty of time')}</Badge>
                 <Badge color="yellow" variant="light" leftSection={<IconCircleFilled size={8} />}>{t('Middels · 20p', 'Medium · 20p')}</Badge>
                 <Badge color="red" variant="light" leftSection={<IconCircleFilled size={8} />}>{t('Kompleks · 30p · kort tid', 'Complex · 30p · short time')}</Badge>
               </Group>
-              {spill.combo >= 2 && (
-                <Badge color="orange" size="lg" variant="filled" leftSection={<IconFlame size={16} />}>
-                  Combo x{spill.combo}
-                </Badge>
-              )}
+              <Group gap="xs">
+                {spill.combo >= 2 && (
+                  <Badge color="orange" size="lg" variant="filled" leftSection={<IconFlame size={16} />}>
+                    Combo x{spill.combo}
+                  </Badge>
+                )}
+                <Button
+                  size="xs"
+                  variant="default"
+                  leftSection={<IconDoorExit size={16} />}
+                  onClick={spoerOmUt}
+                >
+                  {t('Stemple ut', 'Clock out')}
+                </Button>
+              </Group>
             </Group>
             <div className={classes.skrivebord} aria-live="polite">
               {spill.saker.length === 0 ? (
@@ -242,15 +291,17 @@ export function Skadeko() {
             onNyDag={nyDag}
             onVisButikk={() => setVisButikk(true)}
             sjef={aktive.includes('forfremmelse')}
+            onTilStart={tilStart}
+            gradvelger={<GradVelger verdi={grad} onEndre={setGrad} />}
             highscore={
-              highscores.kvalifiserer(spill.resultat.poeng) || lagretNa
+              highscores.kvalifiserer(spill.resultat.poeng, spill.resultat.vanskelighetsgrad) || lagretNa
                 ? (
                     <HighscoreInnmelding
                       key={spill.resultat.sekunderSpilt + '-' + spill.resultat.poeng}
                       poeng={spill.resultat.poeng}
-                      onLagre={(navn) => {
+                      onLagre={async (navn) => {
+                        await highscores.leggTil(navn, spill.resultat!.poeng, spill.resultat!.vanskelighetsgrad);
                         setLagretNa(true);
-                        highscores.leggTil(navn, spill.resultat!.poeng);
                       }}
                     />
                   )
@@ -263,14 +314,18 @@ export function Skadeko() {
       <Highscores
         apen={visHighscores}
         onLukk={() => setVisHighscores(false)}
-        liste={highscores.liste}
+        listeFor={highscores.listeFor}
+        startGrad={spill.resultat?.vanskelighetsgrad ?? grad}
         nullstillesPa={highscores.nullstillesPa}
+        laster={highscores.laster}
+        feil={highscores.feil}
       />
 
       <Sidemeny
         apen={visMeny}
         onLukk={() => setVisMeny(false)}
         onNyDag={nyDag}
+        onTilStart={spoerOmUt}
         onVisHighscores={() => {
           highscores.oppdater();
           setVisHighscores(true);
@@ -300,6 +355,31 @@ export function Skadeko() {
         }}
         eide={kjopt}
       />
+
+      <Modal
+        opened={bekreftUt !== null}
+        onClose={bliVedPulten}
+        title={t('Stemple ut før dagen er over?', 'Clock out before the day is over?')}
+        centered
+        radius="lg"
+      >
+        <Stack gap="md">
+          <Text>
+            {t(
+              'Dagen blir ikke lagret, og du kommer ikke på poengtavla. Bjarne kommer til å legge merke til at pulten er tom.',
+              'The day will not be saved, and you will not make the leaderboard. Bjarne will notice the empty desk.',
+            )}
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={bliVedPulten}>
+              {t('Bli ved pulten', 'Stay at the desk')}
+            </Button>
+            <Button color="red" leftSection={<IconDoorExit size={16} />} onClick={tilStart}>
+              {t('Gå til startsiden', 'Go to start page')}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
 
       <SakDialog sak={spill.aapenSak} onSvar={spill.svarPaSak} onLukk={spill.lukkSak} />
       <TeamsPopup meldinger={teams.meldinger} onLukk={teams.lukk} />

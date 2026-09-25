@@ -2,6 +2,7 @@ import { Alert, Blockquote, Button, Group, Paper, Stack, Text } from '@mantine/c
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hentMedarbeidersamtale } from '../api/medarbeidersamtale.api';
+import { GRAD_ETTER_ID } from '../data/vanskelighetsgrader';
 import type { Dagsresultat } from '../types/skadeko.types';
 import { useSprak } from '../../../sprak';
 import classes from './Skadeko.module.css';
@@ -9,16 +10,27 @@ import classes from './Skadeko.module.css';
 type Props = {
   resultat: Dagsresultat;
   onNyDag: () => void;
+  onTilStart: () => void;
   /** Navne-innmelding til highscore-lista, når poengsummen er god nok. */
   highscore?: ReactNode;
   /** Åpner butikken. */
   onVisButikk?: () => void;
   /** Forfremmelsen er aktiv: spilleren er sjefen, Bjarne er skadebehandler. */
   sjef?: boolean;
+  /** Lar spilleren bytte stilling før neste arbeidsdag. */
+  gradvelger?: ReactNode;
 };
 
 /** Bjarne leser dagsrapporten og er uimponert. Ett kall til AI-gatewayen. */
-export function Medarbeidersamtale({ resultat, onNyDag, highscore, onVisButikk, sjef = false }: Props) {
+export function Medarbeidersamtale({
+  resultat,
+  onNyDag,
+  onTilStart,
+  highscore,
+  gradvelger,
+  onVisButikk,
+  sjef = false,
+}: Props) {
   const { t, sprak } = useSprak();
   const tittel = sjef ? t('Sjef', 'Boss') : resultat.tittel;
   const { data, error, isPending, isError, refetch, isFetching } = useQuery({
@@ -69,6 +81,7 @@ export function Medarbeidersamtale({ resultat, onNyDag, highscore, onVisButikk, 
           <Nokkeltall etikett={t('Poeng', 'Points')} verdi={String(resultat.poeng)} />
           <Nokkeltall etikett={t('Tapte kunder', 'Lost customers')} verdi={String(resultat.tapt)} />
           <Nokkeltall etikett={t('Tittel', 'Title')} verdi={tittel} />
+          <Nokkeltall etikett={t('Stilling', 'Position')} verdi={GRAD_ETTER_ID[resultat.vanskelighetsgrad].navn} />
         </Group>
 
         {isPending || isFetching ? (
@@ -87,9 +100,14 @@ export function Medarbeidersamtale({ resultat, onNyDag, highscore, onVisButikk, 
 
         {highscore}
 
+        {gradvelger}
+
         <Group>
           <Button size="md" onClick={onNyDag} color="teal">
             {t('Ny arbeidsdag 🔁', 'New working day 🔁')}
+          </Button>
+          <Button size="md" variant="default" onClick={onTilStart}>
+            {t('Til startsiden', 'Back to start')}
           </Button>
           {isError && (
             <Button size="md" variant="subtle" onClick={() => refetch()}>

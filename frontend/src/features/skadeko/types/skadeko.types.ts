@@ -1,3 +1,5 @@
+import type { VanskelighetsgradId } from '../data/vanskelighetsgrader';
+
 export type Kategori = 'enkel' | 'middels' | 'kompleks';
 
 /** En sak slik den er skrevet i datafila, før den havner på skrivebordet. */
@@ -68,4 +70,5 @@ export type Dagsresultat = {
   sekunderSpilt: number;
   /** Hvorfor arbeidsdagen tok slutt. */
   aarsak: string;
+  vanskelighetsgrad: VanskelighetsgradId;
 };

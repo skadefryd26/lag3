@@ -12,6 +12,8 @@ export type MedarbeidersamtaleRequest = {
   sprak: 'no' | 'en';
   /** Spilleren har kjøpt forfremmelse: spilleren er sjefen, Bjarne er skadebehandler. */
   sjef: boolean;
+  /** Stillingen spilleren valgte: Vikar, Fulltid eller Senior. */
+  stilling: string;
 };
 
 export type MedarbeidersamtaleResponse = {

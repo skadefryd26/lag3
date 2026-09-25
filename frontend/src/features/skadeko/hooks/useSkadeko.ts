@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { tekst } from '../../../sprak';
 import { TAPSMELDINGER, TAPSMELDINGER_EN, finnTittel, plukk } from '../data/saker';
 import { KATEGORIER, SAKMALER } from '../data/skadesaker';
+import { GRAD_ETTER_ID, STANDARD_GRAD, type VanskelighetsgradId } from '../data/vanskelighetsgrader';
 import type {
   Dagsresultat,
   Sak,
@@ -23,14 +24,17 @@ const COMBO_PER_STEG = 5;
 /*
  * Vanskelighetsgraden følger aktiv spilletid (pauser teller ikke) og øker
  * jevnt uten tak — dagen tar slutt fordi du til slutt ikke henger med.
- * Level 10 nås etter 100 sekunder; etter det blir det fortsatt verre.
+ * Level 10 nås etter 150 sekunder; etter det blir det fortsatt verre.
  *
- *   aktiv tid        0 s    25 s   50 s   75 s   100 s  (level 10)
+ *   aktiv tid        0 s   37 s   75 s  112 s  150 s  (level 10)
  *   ny sak hvert   4,5 s   3,6 s  3,0 s  2,5 s  2,2 s
- *   tid per sak     36 s    23 s   17 s   14 s   11 s  (× kategoriens tålmodighet)
+ *   tid per sak     36 s    28 s   23 s   19 s   17 s  (× kategoriens tålmodighet)
+ *
+ * Tallene over er Senior. Vikar og Fulltid ganger dem med faktorene i
+ * `data/vanskelighetsgrader.ts`.
  */
 export const MAKS_LEVEL = 10;
-const TID_TIL_MAKS_LEVEL_MS = 100 * 1000;
+const TID_TIL_MAKS_LEVEL_MS = 150 * 1000;
 
 /** 0 ved start, 1 ved level 10, og videre oppover. */
 const framdrift = (aktivMs: number) => aktivMs / TID_TIL_MAKS_LEVEL_MS;
@@ -39,16 +43,10 @@ const spawnIntervall = (aktivMs: number) =>
   Math.max(1200, 4500 / (1 + 1.05 * framdrift(aktivMs)));
 
 const grunnVarighet = (aktivMs: number) =>
-  Math.max(6000, 36000 / (1 + 2.2 * framdrift(aktivMs)));
+  Math.max(6000, 36000 / (1 + 1.13 * framdrift(aktivMs)));
 
 const levelFor = (aktivMs: number) =>
   Math.min(MAKS_LEVEL, 1 + Math.floor(framdrift(aktivMs) * (MAKS_LEVEL - 1)));
-
-/** Demo/testing: `?level=10` i adressen starter dagen på det levelet. */
-function startLevelFraAdressen(): number {
-  const tall = Number(new URLSearchParams(window.location.search).get('level'));
-  return Number.isInteger(tall) && tall >= 1 && tall <= MAKS_LEVEL ? tall : 1;
-}
 
 function tomForLivTekst(tapt: number, feil: number): string {
   const deler = [];
@@ -90,6 +88,7 @@ export function useSkadeko() {
   const [tilbakemelding, setTilbakemelding] = useState<Tilbakemelding | null>(null);
   const [aapenId, setAapenId] = useState<number | null>(null);
   const [resultat, setResultat] = useState<Dagsresultat | null>(null);
+  const [grad, setGrad] = useState<VanskelighetsgradId>(STANDARD_GRAD);
 
   // Alt som endrer seg hver frame ligger i refs — ikke i state.
   const sakerRef = useRef<Sak[]>([]);
@@ -108,10 +107,9 @@ export function useSkadeko() {
   const kjorer = useRef(false);
   /** Samlet pausetid, så vanskeligheten bare følger tida du faktisk spiller. */
   const pauseTotal = useRef(0);
-  /** Forsprang fra `?level=`, i ms aktiv tid. */
-  const forsprang = useRef(0);
   const levelRef = useRef(1);
-  const aktivTid = (na: number) => na - startetPa.current - pauseTotal.current + forsprang.current;
+  const gradRef = useRef<VanskelighetsgradId>(STANDARD_GRAD);
+  const aktivTid = (na: number) => na - startetPa.current - pauseTotal.current;
 
   const avsluttDagen = useCallback((aarsak: string) => {
     kjorer.current = false;
@@ -128,6 +126,7 @@ export function useSkadeko() {
       tapteSaker: [...tapteSaker.current],
       sekunderSpilt: sekunder,
       aarsak,
+      vanskelighetsgrad: gradRef.current,
     });
     setTilstand('ferdig');
   }, []);
@@ -142,7 +141,10 @@ export function useSkadeko() {
     const rekkefolge = bland(mal.svar.map((_, i) => i));
     const svar = rekkefolge.map((i) => mal.svar[i]);
     const svarEn = rekkefolge.map((i) => mal.svarEn[i]);
-    const varighet = grunnVarighet(aktivTid(na)) * KATEGORIER[mal.kategori].talmodighet;
+    const varighet =
+      grunnVarighet(aktivTid(na)) *
+      GRAD_ETTER_ID[gradRef.current].varighetFaktor *
+      KATEGORIER[mal.kategori].talmodighet;
     spawnet.current += 1;
 
     return {
@@ -188,12 +190,13 @@ export function useSkadeko() {
         }
       }
 
-      if (na >= nesteSpawn.current && overlevende.length < MAKS_SAKER_PA_SKRIVEBORDET) {
-        sakerRef.current = overlevende;
-        overlevende.push(lagSak(na));
-        nesteSpawn.current = na + spawnIntervall(aktivTid(na));
-      } else if (na >= nesteSpawn.current) {
-        nesteSpawn.current = na + spawnIntervall(aktivTid(na));
+      if (na >= nesteSpawn.current) {
+        if (overlevende.length < MAKS_SAKER_PA_SKRIVEBORDET) {
+          sakerRef.current = overlevende;
+          overlevende.push(lagSak(na));
+        }
+        nesteSpawn.current =
+          na + spawnIntervall(aktivTid(na)) * GRAD_ETTER_ID[gradRef.current].spawnFaktor;
       }
 
       sakerRef.current = overlevende;
@@ -299,18 +302,18 @@ export function useSkadeko() {
     setPoeng(poengRef.current);
   }, [avsluttDagen]);
 
-  /** Starter en ny arbeidsdag. `level` hopper rett til et level (til testing). */
-  const startDagen = useCallback((level?: number) => {
+  /** Starter en ny arbeidsdag på valgt vanskelighetsgrad. */
+  const startDagen = useCallback((nyGrad: VanskelighetsgradId) => {
     cancelAnimationFrame(frame.current);
     sakerRef.current = [];
     tapteSaker.current = [];
     nesteId.current = 0;
     spawnet.current = 0;
-    const startLevel = level ?? startLevelFraAdressen();
-    forsprang.current = ((startLevel - 1) / (MAKS_LEVEL - 1)) * TID_TIL_MAKS_LEVEL_MS;
+    gradRef.current = nyGrad;
+    setGrad(nyGrad);
     pauseTotal.current = 0;
-    levelRef.current = startLevel;
-    setLevel(startLevel);
+    levelRef.current = 1;
+    setLevel(1);
     poengRef.current = 0;
     behandletRef.current = 0;
     taptRef.current = 0;
@@ -370,6 +373,21 @@ export function useSkadeko() {
     return true;
   }, []);
 
+  /** Stempler ut uten å fullføre dagen: ingen rapport, ingen poengtavle. */
+  const gaaTilStart = useCallback(() => {
+    kjorer.current = false;
+    pausetPa.current = 0;
+    cancelAnimationFrame(frame.current);
+    sakerRef.current = [];
+    setSaker([]);
+    setAapenId(null);
+    setPauset(false);
+    setResultat(null);
+    setTilbakemelding(null);
+    setTapsmelding(null);
+    setTilstand('ikke-startet');
+  }, []);
+
   // Pause nedtellingen når fanen ikke er synlig.
   useEffect(() => {
     const vedBytte = () => {
@@ -395,11 +413,13 @@ export function useSkadeko() {
     tapt,
     combo,
     level,
+    grad,
     tapsmelding,
     tilbakemelding,
     aapenSak,
     resultat,
     startDagen,
+    gaaTilStart,
     tapDagen,
     apneSak,
     lukkSak,

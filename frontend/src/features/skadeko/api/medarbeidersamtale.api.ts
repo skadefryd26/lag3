@@ -1,7 +1,11 @@
 import type { Dagsresultat } from '../types/skadeko.types';
+import { lokalMedarbeidersamtale } from './lokalBjarne';
 
 type Svar = { samtale: string };
 type Feil = { feil: string };
+
+/** Bygget med `--mode firebase`: ingen backend, Bjarne svarer fra ferdigskrevne setninger. */
+const UTEN_BACKEND = import.meta.env.MODE === 'firebase';
 
 /**
  * Sender dagens tall til vår egen backend. Backend legger ved Bjarnes
@@ -13,6 +17,12 @@ export async function hentMedarbeidersamtale(
   sprak: 'no' | 'en',
   sjef = false,
 ): Promise<string> {
+  if (UTEN_BACKEND) {
+    // Litt betenkningstid, så det føles som Bjarne leser rapporten.
+    await new Promise((ferdig) => setTimeout(ferdig, 1200));
+    return lokalMedarbeidersamtale(resultat);
+  }
+
   const svar = await fetch('/api/medarbeidersamtale', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

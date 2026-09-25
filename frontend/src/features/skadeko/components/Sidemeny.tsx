@@ -5,12 +5,13 @@ type Props = {
   apen: boolean;
   onLukk: () => void;
   onNyDag: () => void;
+  onTilStart: () => void;
   onVisHighscores: () => void;
   onVisButikk: () => void;
 };
 
 /** Sidemenyen som glir inn fra venstre. Resten av siden blir uskarp bak den. */
-export function Sidemeny({ apen, onLukk, onNyDag, onVisHighscores, onVisButikk }: Props) {
+export function Sidemeny({ apen, onLukk, onNyDag, onTilStart, onVisHighscores, onVisButikk }: Props) {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const { sprak, settSprak, t } = useSprak();
   const velg = (handling: () => void) => () => {
@@ -33,6 +34,7 @@ export function Sidemeny({ apen, onLukk, onNyDag, onVisHighscores, onVisButikk }
       radius="md"
     >
       <Stack gap={4}>
+        <NavLink label={t('Startsiden', 'Start page')} leftSection="🏠" onClick={velg(onTilStart)} />
         <NavLink label={t('Ny arbeidsdag', 'New working day')} leftSection="☕" onClick={velg(onNyDag)} />
         <NavLink label={t('Poengtavle', 'Leaderboard')} leftSection="🏆" onClick={velg(onVisHighscores)} />
         <NavLink label={t('Butikk', 'Shop')} leftSection="🛒" onClick={velg(onVisButikk)} />
