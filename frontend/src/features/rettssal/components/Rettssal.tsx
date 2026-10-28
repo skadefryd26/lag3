@@ -3,6 +3,7 @@ import { Alert, Avatar, Button, Container, Group, Paper, Stack, Text, Textarea, 
 import { useRettssak } from "../api/rettssakApi";
 import { BolleRegn } from "./BolleRegn";
 import { Kanelbolle } from "./Kanelbolle";
+import { Klubbehammer } from "./Klubbehammer";
 
 const venteTekster = [
   "Bolle-Bjarne henter kaffe …",
@@ -69,7 +70,10 @@ export function Rettssal() {
               🔨 Til retten
             </Button>
             {sak.isPending && (
-              <Text ta="center" c="orange.2"><span className="bounce">🥐</span> {venteTekster[venteIndex]}</Text>
+              <Stack align="center" gap={2}>
+                <Klubbehammer />
+                <Text ta="center" c="orange.2"><span className="bounce">🥐</span> {venteTekster[venteIndex]}</Text>
+              </Stack>
             )}
           </Stack>
         </Paper>
