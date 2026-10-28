@@ -2,6 +2,10 @@ import { askGateway } from "../clients/aiGateway.js";
 import { aktorPrompt, dommerPrompt, forsvarerPrompt } from "../prompts/prompts.js";
 import type { RettssakResponse } from "../types/rettssak.js";
 
+const MIN_BOLLER = 8;
+const MAX_BOLLER = 100;
+const begrens = (n: number) => Math.min(MAX_BOLLER, Math.max(MIN_BOLLER, n));
+
 function parseDom(raw: string): RettssakResponse["dom"] {
   const cleaned = raw.replace(/```(json)?/g, "").trim();
   try {
@@ -10,13 +14,13 @@ function parseDom(raw: string): RettssakResponse["dom"] {
     const json = JSON.parse(cleaned.slice(start, end + 1)) as { boller?: unknown; begrunnelse?: unknown };
     const boller = Math.round(Number(json.boller));
     if (Number.isFinite(boller) && typeof json.begrunnelse === "string") {
-      return { boller: Math.min(100, Math.max(1, boller)), begrunnelse: json.begrunnelse };
+      return { boller: begrens(boller), begrunnelse: json.begrunnelse };
     }
   } catch {
     // faller tilbake under
   }
   const tall = cleaned.match(/\d+/);
-  return { boller: tall ? Math.min(100, Math.max(1, Number(tall[0]))) : 42, begrunnelse: cleaned };
+  return { boller: tall ? begrens(Number(tall[0])) : 42, begrunnelse: cleaned };
 }
 
 export async function holdRettssak(unnskyldning: string): Promise<RettssakResponse> {

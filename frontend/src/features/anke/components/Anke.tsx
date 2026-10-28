@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Alert, Avatar, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useAnke, type AnkeResponse } from "../api/ankeApi";
+import { Kanelbolle } from "../../rettssal/components/Kanelbolle";
 import { Bollefrid } from "./Bollefrid";
 
 const ventetekster = [
@@ -28,7 +29,7 @@ function AnkeInnlegg({ anke, nivaa }: { anke: AnkeResponse; nivaa: number }) {
           {anke.dommer} skjerper dommen
         </Text>
         <Text className="stamp" fw={900} c="red.5" style={{ fontSize: 72, fontFamily: "'Playfair Display', serif" }}>
-          {anke.boller} 🥐
+          {anke.boller} <Kanelbolle size={64} />
         </Text>
         <Text ta="center" style={{ whiteSpace: "pre-wrap" }}>
           {anke.begrunnelse}
