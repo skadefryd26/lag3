@@ -1,4 +1,5 @@
 // Bolle-Bjarne leser opp dommen med nettleserens innebygde talestemme.
+// Han er fortsatt arrogant, men nå er han ellevill når det er snakk om boller.
 
 function norskStemme(): SpeechSynthesisVoice | undefined {
   const stemmer = window.speechSynthesis.getVoices();
@@ -9,20 +10,33 @@ function norskStemme(): SpeechSynthesisVoice | undefined {
 }
 
 const innledninger = [
-  "Åh. Nei. Ikke du igjen.",
-  "Hmpf. Jeg hadde akkurat satt meg.",
-  "Mmm. Ja. Greit. Hvis vi må.",
-  "Jaja. Retten er vel satt da.",
+  "Ja! JA! Retten er satt! Endelig skjer det noe her!",
+  "Åh, for en sak! Jeg kjenner allerede lukten av kanel!",
+  "Mine damer og herrer! Bolle-Bjarne er i bygget!",
+  "Hehe. Å, dette blir godt. Dette blir veldig godt.",
 ];
 
 const avslutninger = [
-  "Retten er hevet. Ikke snakk til meg.",
-  "Ferdig. Og kaffen min er kald. Selvfølgelig.",
-  "Retten er hevet. Jeg går og legger meg i serverrommet.",
-  "Det var det. Hvorfor er det alltid jeg?",
+  "Retten er hevet! Og kaffen er klar! Perfekt dag!",
+  "Fantastisk! Jeg går og varmer opp kaffen!",
+  "Rettferdigheten har seiret! Og den smaker kanel!",
+  "Takk for i dag! Husk: lås PC-en, eller kom tilbake med flere boller!",
 ];
 
 const tilfeldig = (liste: string[]) => liste[Math.floor(Math.random() * liste.length)];
+
+type Lytter = (snakker: boolean) => void;
+const lyttere = new Set<Lytter>();
+
+/** Lar en komponent (f.eks. animerte Bjarne) vite når han snakker. */
+export function lyttPaaOpplesning(lytter: Lytter) {
+  lyttere.add(lytter);
+  return () => {
+    lyttere.delete(lytter);
+  };
+}
+
+const varsle = (snakker: boolean) => lyttere.forEach((l) => l(snakker));
 
 export function lesOppDom(boller: number, begrunnelse: string) {
   if (!("speechSynthesis" in window)) return;
@@ -30,13 +44,10 @@ export function lesOppDom(boller: number, begrunnelse: string) {
   synth.cancel();
 
   const renTekst = begrunnelse.replace(/\*[^*]*\*/g, "").replace(/§/g, "paragraf ").trim();
-  // Komma og tankestreker gir lange, oppgitte pauser
   const deler = [
     tilfeldig(innledninger),
-    "...",
-    renTekst.replace(/\. /g, "... "),
-    `Dommen lyder... ${boller}... boller.`,
-    "...",
+    renTekst,
+    `Og dommen lyder... ${boller}! ${boller} BOLLER! Hahaha!`,
     tilfeldig(avslutninger),
   ];
 
@@ -45,13 +56,20 @@ export function lesOppDom(boller: number, begrunnelse: string) {
     const ytring = new SpeechSynthesisUtterance(del);
     ytring.lang = "nb-NO";
     if (stemme) ytring.voice = stemme;
-    ytring.rate = i === 0 || i === deler.length - 1 ? 0.75 : 0.82; // Bjarne gidder ikke skynde seg
-    ytring.pitch = 0.45; // dyp, sur og lei
-    ytring.volume = i === deler.length - 1 ? 0.8 : 1; // mumler den siste setningen
+    const erBolleDom = i === 2;
+    ytring.rate = erBolleDom ? 1.15 : 1.05; // ivrig, nesten for ivrig
+    ytring.pitch = erBolleDom ? 1.6 : 1.2; // stemmen går opp når bollene nevnes
+    ytring.volume = 1;
+    if (i === 0) ytring.onstart = () => varsle(true);
+    if (i === deler.length - 1) {
+      ytring.onend = () => varsle(false);
+      ytring.onerror = () => varsle(false);
+    }
     synth.speak(ytring);
   });
 }
 
 export function stoppOpplesning() {
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  varsle(false);
 }
