@@ -25,6 +25,14 @@ body {
 .bounce { display: inline-block; animation: bounce 1s ease-in-out infinite; }
 .stamp { animation: stamp 0.7s cubic-bezier(.2,1.6,.4,1) both; }
 
+@keyframes bolleFall {
+  0% { opacity: 1; transform: translateY(-10vh) rotate(0deg); }
+  100% { opacity: 0.9; transform: translateY(110vh) rotate(var(--spin)); }
+}
+
+.bolleregn { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1000; }
+.bolle { position: absolute; top: 0; opacity: 0; animation-name: bolleFall; animation-timing-function: ease-in; animation-fill-mode: both; }
+
 /* --- Klubbehammeren: slår i kanelbollen mens retten tenker --- */
 
 @keyframes klubbeslag {
