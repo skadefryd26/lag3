@@ -1,56 +1,59 @@
 // Bolle-Bjarne leser opp dommen med nettleserens innebygde talestemme.
-//
-// Tre ting avgjør om det høres ut som et menneske eller en mikrobølgeovn:
-//   1. at vi faktisk får tak i en norsk stemme (lista er tom de første sekundene)
-//   2. at tonefallet får ligge nær det normale - dyp og treg blir monoton, ikke lat
-//   3. at pausene er ekte stillhet mellom setninger, ikke "..." inni teksten
+// Han er fortsatt arrogant, men nå er han ellevill når det er snakk om boller.
 
-let aktivTimer: number | null = null;
-let avbrutt = false;
+// Kjente mannsstemmer i Windows/Edge/Mac. Edge sine «Online (Natural)»-stemmer er de beste.
+const MANN = /finn|jon|jeppe|christoffer|magnus|mads|male|mann|david|mark|guy|daniel/i;
+const KVINNE = /pernille|iselin|hulda|helle|christel|sofie|female|kvinne|zira|nora/i;
+const NORDISK = /^(nb|no|nn|da|sv)(-|_|$)/i;
 
-/** Stemmelista fylles asynkront i Chrome og Edge. Vent på den. */
+/** Velger best mulige mannsstemme: norsk > dansk/svensk > hva som helst. */
+function velgStemme(stemmer: SpeechSynthesisVoice[]): { stemme?: SpeechSynthesisVoice; erKvinne: boolean } {
+  const poeng = (s: SpeechSynthesisVoice) =>
+    (MANN.test(s.name) ? 100 : KVINNE.test(s.name) ? 0 : 40) +
+    (/^(nb|no|nn)/i.test(s.lang) ? 30 : NORDISK.test(s.lang) ? 20 : 0) +
+    (/natural|online/i.test(s.name) ? 5 : 0);
+  const nordiske = stemmer.filter((s) => NORDISK.test(s.lang));
+  const kandidater = nordiske.length ? nordiske : stemmer;
+  const stemme = [...kandidater].sort((a, b) => poeng(b) - poeng(a))[0];
+  return { stemme, erKvinne: !stemme || !MANN.test(stemme.name) };
+}
+
+// Stemmelista lastes asynkront i Chrome/Edge – be om den tidlig.
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener?.("voiceschanged", () => window.speechSynthesis.getVoices());
+}
+
+/**
+ * Vent til stemmelista faktisk er fylt. Uten dette havner den aller første
+ * opplesningen på en engelsk stemme som leser norsk - og det er den enkeltfeilen
+ * som gjør at Bjarne høres ut som en mikrobølgeovn.
+ */
 function hentStemmer(): Promise<SpeechSynthesisVoice[]> {
   const synth = window.speechSynthesis;
   const naa = synth.getVoices();
   if (naa.length) return Promise.resolve(naa);
-
   return new Promise((resolve) => {
     const ferdig = () => resolve(synth.getVoices());
     synth.addEventListener("voiceschanged", ferdig, { once: true });
-    // Noen nettlesere sender aldri hendelsen. Ikke bli stående og vente.
-    window.setTimeout(ferdig, 1200);
+    window.setTimeout(ferdig, 1200); // noen nettlesere sender aldri hendelsen
   });
-}
-
-function velgStemme(stemmer: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
-  const norske = stemmer.filter((s) => /^(nb|nn|no)(-|_|$)/i.test(s.lang));
-  // Windows har «Microsoft Finn», macOS har «Nora». Finn foretrekkes - Bjarne er en mann.
-  return (
-    norske.find((s) => /finn|jon|mann|male/i.test(s.name)) ??
-    norske[0] ??
-    // Ingen norsk stemme installert: dansk og svensk uttaler norsk langt bedre enn engelsk.
-    stemmer.find((s) => /^(da|sv)(-|_|$)/i.test(s.lang))
-  );
 }
 
 /** Gjør teksten leselig for en talesyntese. */
 function tilTale(tekst: string): string {
-  return (
-    tekst
-      // *sukk* er en regianvisning, ikke noe som skal leses
-      .replace(/\*[^*]*\*/g, " ")
-      .replace(/§\s*/g, "paragraf ")
-      // «3-1» leses ellers som «tre bindestrek en»
-      .replace(/(\d)\s*-\s*(\d)/g, "$1 $2")
-      .replace(/\bjf\.\s*/gi, "jamfør ")
-      .replace(/\bbl\.a\.\s*/gi, "blant annet ")
-      .replace(/\bosv\./gi, "og så videre")
-      .replace(/\s+/g, " ")
-      .trim()
-  );
+  return tekst
+    .replace(/\*[^*]*\*/g, " ") // *sukk* er en regianvisning, ikke tale
+    .replace(/§\s*/g, "paragraf ")
+    .replace(/(\d)\s*-\s*(\d)/g, "$1 $2") // «3-1» ble lest som «tre bindestrek en»
+    .replace(/\bjf\.\s*/gi, "jamfør ")
+    .replace(/\bbl\.a\.\s*/gi, "blant annet ")
+    .replace(/\bosv\./gi, "og så videre")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-/** Del opp i setninger, så hver får sitt eget tonefall og en pust etterpå. */
+/** Én setning per ytring gir hver setning sitt eget tonefall og en naturlig pust. */
 function tilSetninger(tekst: string): string[] {
   return tekst
     .split(/(?<=[.!?])\s+/)
@@ -59,87 +62,90 @@ function tilSetninger(tekst: string): string[] {
 }
 
 const innledninger = [
-  "Åh. Nei. Ikke du igjen.",
-  "Hmpf. Jeg hadde akkurat satt meg.",
-  "Mmm. Ja. Greit. Hvis vi må.",
-  "Jaja. Retten er vel satt, da.",
+  "Ja! JA! Retten er satt! Endelig skjer det noe her!",
+  "Åh, for en sak! Jeg kjenner allerede lukten av kanel!",
+  "Mine damer og herrer! Bolle-Bjarne er i bygget!",
+  "Hehe. Å, dette blir godt. Dette blir veldig godt.",
 ];
 
 const avslutninger = [
-  "Retten er hevet. Ikke snakk til meg.",
-  "Ferdig. Og kaffen min er kald. Selvfølgelig.",
-  "Retten er hevet. Jeg går og legger meg i serverrommet.",
-  "Det var det. Hvorfor er det alltid jeg?",
+  "Retten er hevet! Og kaffen er klar! Perfekt dag!",
+  "Fantastisk! Jeg går og varmer opp kaffen!",
+  "Rettferdigheten har seiret! Og den smaker kanel!",
+  "Takk for i dag! Husk: lås PC-en, eller kom tilbake med flere boller!",
 ];
 
 const tilfeldig = (liste: string[]) => liste[Math.floor(Math.random() * liste.length)];
 
-type Replikk = { tekst: string; rate: number; pitch: number; volume: number; pauseEtter: number };
+type Lytter = (snakker: boolean) => void;
+const lyttere = new Set<Lytter>();
 
-/** Si én replikk, og vent til den er ferdig. */
-function si(replikk: Replikk, stemme?: SpeechSynthesisVoice): Promise<void> {
-  return new Promise((resolve) => {
-    if (avbrutt) return resolve();
-
-    const ytring = new SpeechSynthesisUtterance(replikk.tekst);
-    ytring.lang = stemme?.lang ?? "nb-NO";
-    if (stemme) ytring.voice = stemme;
-    ytring.rate = replikk.rate;
-    ytring.pitch = replikk.pitch;
-    ytring.volume = replikk.volume;
-
-    const videre = () => {
-      if (avbrutt) return resolve();
-      // Ekte stillhet mellom setningene - det er dette som gir pust og timing.
-      aktivTimer = window.setTimeout(resolve, replikk.pauseEtter);
-    };
-
-    ytring.onend = videre;
-    ytring.onerror = videre;
-    window.speechSynthesis.speak(ytring);
-  });
+/** Lar en komponent (f.eks. animerte Bjarne) vite når han snakker. */
+export function lyttPaaOpplesning(lytter: Lytter) {
+  lyttere.add(lytter);
+  return () => {
+    lyttere.delete(lytter);
+  };
 }
+
+const varsle = (snakker: boolean) => lyttere.forEach((l) => l(snakker));
+let aktiveYtringer: SpeechSynthesisUtterance[] = [];
+let sjekkId: ReturnType<typeof setInterval> | undefined;
+let avbrutt = false;
 
 export async function lesOppDom(boller: number, begrunnelse: string) {
   if (!("speechSynthesis" in window)) return;
-
-  stoppOpplesning();
+  const synth = window.speechSynthesis;
+  synth.cancel();
   avbrutt = false;
 
-  const stemme = velgStemme(await hentStemmer());
+  // Stemmen må være på plass før første ytring sendes av gårde.
+  const { stemme, erKvinne } = velgStemme(await hentStemmer());
   if (avbrutt) return;
 
   const setninger = tilSetninger(tilTale(begrunnelse));
-
-  const replikker: Replikk[] = [
-    // Sukket først: litt lavere og litt tregere enn resten, men ikke monotont.
-    { tekst: tilfeldig(innledninger), rate: 0.92, pitch: 0.85, volume: 1, pauseEtter: 550 },
-    // Selve begrunnelsen i normalt tempo. Bjarne er lat, ikke søvnig.
-    ...setninger.map((tekst, i) => ({
-      tekst,
-      rate: 1,
-      pitch: 0.9,
-      volume: 1,
-      pauseEtter: i === setninger.length - 1 ? 650 : 320,
-    })),
-    // Selve domsslutningen: langsom og tydelig, med en pause foran tallet.
-    { tekst: "Dommen lyder:", rate: 0.88, pitch: 0.88, volume: 1, pauseEtter: 700 },
-    { tekst: `${boller} boller.`, rate: 0.82, pitch: 0.82, volume: 1, pauseEtter: 800 },
-    // Siste replikk mumles, som om han allerede har reist seg.
-    { tekst: tilfeldig(avslutninger), rate: 0.95, pitch: 0.85, volume: 0.75, pauseEtter: 0 },
+  const deler: { tekst: string; erBolleDom: boolean }[] = [
+    { tekst: tilfeldig(innledninger), erBolleDom: false },
+    ...setninger.map((tekst) => ({ tekst, erBolleDom: false })),
+    { tekst: `Og dommen lyder... ${boller}! ${boller} BOLLER! Hahaha!`, erBolleDom: true },
+    { tekst: tilfeldig(avslutninger), erBolleDom: false },
   ];
 
-  for (const replikk of replikker) {
-    if (avbrutt) return;
-    await si(replikk, stemme);
+  // Nettleserens start/slutt-hendelser er upålitelige (særlig i Edge/Chrome),
+  // så Bjarne begynner å snakke med en gang, og vi sjekker selv når talen er ferdig.
+  varsle(true);
+  aktiveYtringer = [];
+  if (sjekkId) clearInterval(sjekkId);
+  let harStartet = false;
+  const start = Date.now();
+  sjekkId = setInterval(() => {
+    if (synth.speaking) harStartet = true;
+    const ferdig = harStartet ? !synth.speaking : Date.now() - start > 4000;
+    if (ferdig) {
+      clearInterval(sjekkId);
+      sjekkId = undefined;
+      varsle(false);
+    }
+  }, 250);
+
+  // Mannsstemme: litt lys og ivrig. Finnes bare kvinnestemme: dra den så dypt det går.
+  const grunnTone = erKvinne ? 0.1 : 1.0;
+  for (const { tekst, erBolleDom } of deler) {
+    const ytring = new SpeechSynthesisUtterance(tekst);
+    ytring.lang = stemme?.lang ?? "nb-NO";
+    if (stemme) ytring.voice = stemme;
+    ytring.rate = erBolleDom ? 1.15 : 1.05; // ivrig, nesten for ivrig
+    ytring.pitch = erBolleDom ? grunnTone + 0.3 : grunnTone; // stemmen går opp når bollene nevnes
+    ytring.volume = 1;
+    aktiveYtringer.push(ytring); // hindrer at nettleseren kaster dem midt i opplesningen
+    synth.speak(ytring);
   }
 }
 
 export function stoppOpplesning() {
   avbrutt = true;
-  if (aktivTimer !== null) {
-    window.clearTimeout(aktivTimer);
-    aktivTimer = null;
-  }
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  if (sjekkId) clearInterval(sjekkId);
+  sjekkId = undefined;
+  varsle(false);
 }

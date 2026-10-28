@@ -7,6 +7,7 @@ import { Kanelbolle } from "./Kanelbolle";
 import { BitReklame } from "./BitReklame";
 import { BolleSlackLogo } from "./BolleSlackLogo";
 import { Kjevle } from "./Kjevle";
+import { BjarneFigur } from "./BjarneFigur";
 import { sukk, vekkLyd } from "../lyd/sukk";
 import { lesOppDom, stoppOpplesning } from "../lyd/opplesning";
 import { Vaktkamera } from "../../vaktkamera/components/Vaktkamera";
@@ -147,7 +148,7 @@ export function Rettssal() {
             <Innlegg ikon="🧑‍💼" navn="Forsvarer" farge="blue" tekst={sak.data.forsvarer} delay={0.6} />
             <Paper p="xl" withBorder className="fade-up" style={{ animationDelay: "1.2s", borderColor: "orange", borderWidth: 3 }}>
               <Stack align="center" gap="xs">
-                <Avatar size={80} radius="xl" color="orange">☕</Avatar>
+                <BjarneFigur size={180} />
                 <Text fw={900} size="xl" c="orange.3">Bolle-Bjarne avsier dom</Text>
                 <Text className="stamp" fw={900} c="orange.4" style={{ fontSize: 72, animationDelay: "1.6s", fontFamily: "'Playfair Display', serif" }}>
                   {sak.data.dom.boller} <Kanelbolle size={64} />
