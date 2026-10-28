@@ -1,5 +1,6 @@
 ﻿import { useEffect, useRef } from "react";
 import { Stack, Text } from "@mantine/core";
+import { Kanelbolle } from "./Kanelbolle";
 
 /**
  * Kjevla: mens retten tenker, slår Bolle-Bjarne bakstekjevla i kanelbollen.
@@ -70,7 +71,7 @@ export function Kjevle() {
       <div className="klubbescene" aria-label="Bolle-Bjarne slår kjevla i en kanelbolle">
         <span className="kjevle" aria-hidden="true" />
         <span className="bolle-under-klubba" aria-hidden="true">
-          🥐
+          <Kanelbolle size={46} />
         </span>
         <span className="smuler" aria-hidden="true">
           <i>·</i>

@@ -101,9 +101,10 @@ body {
 
 .klubbescene .bolle-under-klubba {
   position: absolute;
-  left: 86px;
-  top: 56px;
-  font-size: 44px;
+  left: 84px;
+  top: 58px;
+  display: inline-block;
+  line-height: 0;
   transform-origin: 50% 100%;
   animation: bolleklem 0.9s cubic-bezier(.3, 0, .2, 1) infinite;
 }
