@@ -168,6 +168,7 @@ export function Rettssal() {
             </Paper>
             <Anke
               key={sak.data.dom.begrunnelse}
+              navn={navn}
               unnskyldning={unnskyldning}
               startBoller={sak.data.dom.boller}
               startBegrunnelse={sak.data.dom.begrunnelse}

@@ -3,6 +3,10 @@ import { Alert, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useAnke, type AnkeResponse } from "../api/ankeApi";
 import { Kanelbolle } from "../../rettssal/components/Kanelbolle";
 import { Bollefrid } from "./Bollefrid";
+import { Bollestonad } from "../../stonad/components/Bollestonad";
+
+/** Retten tåler to anker. Den tredje gangen er det skjemaveien som gjelder. */
+const MAKS_ANKER = 2;
 
 const ventetekster = [
   "Anken registreres i Bolleregisteret …",
@@ -34,10 +38,12 @@ function AnkeInnlegg({ anke, nivaa }: { anke: AnkeResponse; nivaa: number }) {
 }
 
 export function Anke({
+  navn,
   unnskyldning,
   startBoller,
   startBegrunnelse,
 }: {
+  navn: string;
   unnskyldning: string;
   startBoller: number;
   startBegrunnelse: string;
@@ -49,7 +55,8 @@ export function Anke({
   const gjeldendeBoller = sist?.boller ?? startBoller;
   const gjeldendeBegrunnelse = sist?.begrunnelse ?? startBegrunnelse;
   const nesteNivaa = anker.length + 1;
-  const slutt = nesteNivaa > 25;
+  // To anker, ikke mer. Etter det finnes det bare skjemaer igjen.
+  const slutt = nesteNivaa > MAKS_ANKER;
 
   return (
     <Stack>
@@ -95,9 +102,12 @@ export function Anke({
           </Stack>
         </Group>
       ) : (
-        <Alert color="orange" title="Rettsmidlene er uttømt">
-          Det finnes ingen flere instanser. Det finnes knapt flere boller. Dommen er endelig.
-        </Alert>
+        <Stack>
+          <Alert color="orange" title="Rettsmidlene er uttømt">
+            To anker, to nederlag. Det finnes ingen flere instanser, og knapt flere boller. Dommen er endelig.
+          </Alert>
+          <Bollestonad navn={navn} boller={gjeldendeBoller} unnskyldning={unnskyldning} />
+        </Stack>
       )}
     </Stack>
   );
