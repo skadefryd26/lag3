@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Alert, Avatar, Button, Container, Group, Paper, Stack, Text, Textarea, Title } from "@mantine/core";
 import { useRettssak } from "../api/rettssakApi";
+import { BolleRegn } from "./BolleRegn";
+import { Kanelbolle } from "./Kanelbolle";
 
 const venteTekster = [
   "Bolle-Bjarne henter kaffe …",
@@ -39,7 +41,7 @@ export function Rettssal() {
     <Container size="md" py="xl">
       <Stack gap="lg">
         <Stack gap={0} align="center">
-          <Text size="64px">⚖️🥐</Text>
+          <Text size="64px">⚖️<Kanelbolle size={72} /></Text>
           <Title order={1} size="56px" ta="center" c="orange.3">Bolle-retten</Title>
           <Text c="dimmed" ta="center" fs="italic">
             Du gikk fra PC-en ulåst. Nå står du for retten. Dommer: Bolle-Bjarne (helt upartisk, sier han).
@@ -78,6 +80,7 @@ export function Rettssal() {
 
         {sak.data && (
           <Stack>
+            <BolleRegn key={sak.submittedAt} antall={sak.data.dom.boller} />
             <Innlegg ikon="📜" navn="Aktor" farge="red" tekst={sak.data.aktor} delay={0} />
             <Innlegg ikon="🧑‍💼" navn="Forsvarer" farge="blue" tekst={sak.data.forsvarer} delay={0.6} />
             <Paper p="xl" withBorder className="fade-up" style={{ animationDelay: "1.2s", borderColor: "orange", borderWidth: 3 }}>
@@ -85,7 +88,7 @@ export function Rettssal() {
                 <Avatar size={80} radius="xl" color="orange">☕</Avatar>
                 <Text fw={900} size="xl" c="orange.3">Bolle-Bjarne avsier dom</Text>
                 <Text className="stamp" fw={900} c="orange.4" style={{ fontSize: 72, animationDelay: "1.6s", fontFamily: "'Playfair Display', serif" }}>
-                  {sak.data.dom.boller} 🥐
+                  {sak.data.dom.boller} <Kanelbolle size={64} />
                 </Text>
                 <Text size="sm" c="dimmed">boller skal leveres til Bolle-Bjarne innen fredag</Text>
                 <Text ta="center" style={{ whiteSpace: "pre-wrap" }}>{sak.data.dom.begrunnelse}</Text>
