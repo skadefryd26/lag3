@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Avatar, Button, Container, Group, Paper, Stack, Text, Textarea, TextInput, Title } from "@mantine/core";
 import { useRettssak } from "../api/rettssakApi";
 import { Anke } from "../../anke/components/Anke";
@@ -10,6 +10,7 @@ import { Kjevle } from "./Kjevle";
 import { BjarneFigur } from "./BjarneFigur";
 import { sukk, vekkLyd } from "../lyd/sukk";
 import { lesOppDom, stoppOpplesning } from "../lyd/opplesning";
+import { Vaktkamera } from "../../vaktkamera/components/Vaktkamera";
 
 const venteTekster = [
   "Bolle-Bjarne henter kaffe …",
@@ -37,6 +38,7 @@ export function Rettssal() {
   const [navn, setNavn] = useState("");
   const [unnskyldning, setUnnskyldning] = useState("");
   const [venteIndex, setVenteIndex] = useState(0);
+  const [sakReist, setSakReist] = useState(false);
   const sak = useRettssak();
 
   useEffect(() => {
@@ -55,6 +57,15 @@ export function Rettssal() {
     };
   }, [sak.data]);
 
+  // Vaktkameraet så ingen på plassen. Saken reises - men dommen venter
+  // til den siktede har forklart seg.
+  const reisSak = useCallback(() => {
+    setSakReist((reist) => {
+      if (!reist) vekkLyd();
+      return true;
+    });
+  }, []);
+
   return (
     <Container size="md" py="xl">
       <Stack gap="lg">
@@ -69,44 +80,62 @@ export function Rettssal() {
 
         <BitReklame />
 
-        <Paper p="lg" withBorder>
-          <Stack>
-            <TextInput
-              label="Den siktedes fornavn"
-              placeholder="Fornavn"
-              maxLength={40}
-              value={navn}
-              onChange={(e) => setNavn(e.currentTarget.value)}
-            />
-            <Textarea
-              label="Din forklaring til retten"
-              placeholder="Det var bare et øyeblikk – jeg måtte redde en kollega fra en kaffemaskin som lekket …"
-              autosize
-              minRows={3}
-              maxLength={1000}
-              value={unnskyldning}
-              onChange={(e) => setUnnskyldning(e.currentTarget.value)}
-            />
-            <Button
-              size="lg"
-              color="orange"
-              loading={sak.isPending}
-              disabled={!navn.trim() || !unnskyldning.trim()}
-              onClick={() => {
-                vekkLyd();
-                sak.mutate({ navn, unnskyldning });
-              }}
-            >
-              🔨 Til retten
-            </Button>
-            {sak.isPending && (
-              <Stack align="center" gap={2}>
-                <Kjevle />
-                <Text ta="center" c="orange.2"><span className="bounce">🥐</span> {venteTekster[venteIndex]}</Text>
-              </Stack>
-            )}
-          </Stack>
-        </Paper>
+        <Vaktkamera onStille={reisSak} />
+
+        {!sakReist ? (
+          <Paper p="lg" withBorder>
+            <Stack align="center" gap="xs">
+              <Text ta="center" c="dimmed">
+                Ingen sak foreligger. Bolle-Bjarne venter på at du skal gå fra plassen din.
+              </Text>
+              <Button variant="subtle" color="orange" size="compact-sm" onClick={reisSak}>
+                … eller meld deg selv
+              </Button>
+            </Stack>
+          </Paper>
+        ) : (
+          <Paper p="lg" withBorder className="fade-up">
+            <Stack>
+              <Text fw={700} c="red.4">
+                Du ble tatt. Saken er reist, og retten venter på forklaringen din.
+              </Text>
+              <TextInput
+                label="Den siktedes fornavn"
+                placeholder="Fornavn"
+                maxLength={40}
+                value={navn}
+                onChange={(e) => setNavn(e.currentTarget.value)}
+              />
+              <Textarea
+                label="Din forklaring til retten"
+                placeholder="Det var bare et øyeblikk – jeg måtte redde en kollega fra en kaffemaskin som lekket …"
+                autosize
+                minRows={3}
+                maxLength={1000}
+                value={unnskyldning}
+                onChange={(e) => setUnnskyldning(e.currentTarget.value)}
+              />
+              <Button
+                size="lg"
+                color="orange"
+                loading={sak.isPending}
+                disabled={!navn.trim() || !unnskyldning.trim()}
+                onClick={() => {
+                  vekkLyd();
+                  sak.mutate({ navn, unnskyldning });
+                }}
+              >
+                🔨 Til retten
+              </Button>
+              {sak.isPending && (
+                <Stack align="center" gap={2}>
+                  <Kjevle />
+                  <Text ta="center" c="orange.2"><span className="bounce">🥐</span> {venteTekster[venteIndex]}</Text>
+                </Stack>
+              )}
+            </Stack>
+          </Paper>
+        )}
 
         {sak.isError && (
           <Alert color="red" title="Retten er hevet (midlertidig)">{sak.error.message}</Alert>
