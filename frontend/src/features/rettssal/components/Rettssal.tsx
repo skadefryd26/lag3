@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Avatar, Button, Container, Group, Paper, Stack, Text, Textarea, Title } from "@mantine/core";
 import { useRettssak } from "../api/rettssakApi";
+import { Klubbehammer } from "./Klubbehammer";
 
 const venteTekster = [
   "Bolle-Bjarne henter kaffe …",
@@ -67,7 +68,10 @@ export function Rettssal() {
               🔨 Til retten
             </Button>
             {sak.isPending && (
-              <Text ta="center" c="orange.2"><span className="bounce">🥐</span> {venteTekster[venteIndex]}</Text>
+              <Stack align="center" gap={2}>
+                <Klubbehammer />
+                <Text ta="center" c="orange.2"><span className="bounce">🥐</span> {venteTekster[venteIndex]}</Text>
+              </Stack>
             )}
           </Stack>
         </Paper>
