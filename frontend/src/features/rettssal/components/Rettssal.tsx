@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Avatar, Button, Container, Group, Paper, Stack, Text, Textarea, Title } from "@mantine/core";
 import { useRettssak } from "../api/rettssakApi";
+import { Anke } from "../../anke/components/Anke";
 import { BolleRegn } from "./BolleRegn";
 import { Kanelbolle } from "./Kanelbolle";
 import { Klubbehammer } from "./Klubbehammer";
@@ -98,6 +99,12 @@ export function Rettssal() {
                 <Text ta="center" style={{ whiteSpace: "pre-wrap" }}>{sak.data.dom.begrunnelse}</Text>
               </Stack>
             </Paper>
+            <Anke
+              key={sak.data.dom.begrunnelse}
+              unnskyldning={unnskyldning}
+              startBoller={sak.data.dom.boller}
+              startBegrunnelse={sak.data.dom.begrunnelse}
+            />
           </Stack>
         )}
       </Stack>
