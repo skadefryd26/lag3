@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, Avatar, Button, Container, Group, Paper, Stack, Text, Textarea, Title } from "@mantine/core";
+import { Alert, Avatar, Button, Container, Group, Paper, Stack, Text, Textarea, TextInput, Title } from "@mantine/core";
 import { useRettssak } from "../api/rettssakApi";
 import { Anke } from "../../anke/components/Anke";
 import { BolleRegn } from "./BolleRegn";
@@ -33,6 +33,7 @@ function Innlegg({ ikon, navn, farge, tekst, delay }: { ikon: string; navn: stri
 }
 
 export function Rettssal() {
+  const [navn, setNavn] = useState("");
   const [unnskyldning, setUnnskyldning] = useState("");
   const [venteIndex, setVenteIndex] = useState(0);
   const sak = useRettssak();
@@ -69,6 +70,13 @@ export function Rettssal() {
 
         <Paper p="lg" withBorder>
           <Stack>
+            <TextInput
+              label="Den siktedes fornavn"
+              placeholder="Fornavn"
+              maxLength={40}
+              value={navn}
+              onChange={(e) => setNavn(e.currentTarget.value)}
+            />
             <Textarea
               label="Din forklaring til retten"
               placeholder="Det var bare et øyeblikk – jeg måtte redde en kollega fra en kaffemaskin som lekket …"
@@ -82,10 +90,10 @@ export function Rettssal() {
               size="lg"
               color="orange"
               loading={sak.isPending}
-              disabled={!unnskyldning.trim()}
+              disabled={!navn.trim() || !unnskyldning.trim()}
               onClick={() => {
                 vekkLyd();
-                sak.mutate(unnskyldning);
+                sak.mutate({ navn, unnskyldning });
               }}
             >
               🔨 Til retten

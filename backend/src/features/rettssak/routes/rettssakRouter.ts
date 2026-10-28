@@ -8,7 +8,14 @@ export const rettssakRouter = Router();
 rettssakRouter.post(
   "/rettssak",
   async (req: Request<unknown, RettssakResponse | ErrorResponse, RettssakRequest>, res: Response<RettssakResponse | ErrorResponse>) => {
+    const navn = typeof req.body?.navn === "string" ? req.body.navn.trim() : "";
     const unnskyldning = typeof req.body?.unnskyldning === "string" ? req.body.unnskyldning.trim() : "";
+    if (!navn) {
+      return res.status(400).json({ error: "Retten dømmer ikke anonyme syndere. Oppgi fornavnet ditt." });
+    }
+    if (navn.length > 40) {
+      return res.status(400).json({ error: "Det er ikke et fornavn. Bolle-Bjarne orker ikke lese det." });
+    }
     if (!unnskyldning) {
       return res.status(400).json({ error: "Retten kan ikke dømme en tom unnskyldning. *sukk*" });
     }
@@ -17,7 +24,7 @@ rettssakRouter.post(
     }
 
     try {
-      res.json(await holdRettssak(unnskyldning));
+      res.json(await holdRettssak(navn, unnskyldning));
     } catch (err) {
       console.error(err);
       if (err instanceof GatewayError && err.status === 401) {

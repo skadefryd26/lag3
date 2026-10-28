@@ -1,4 +1,4 @@
-export type RettssakRequest = { unnskyldning: string };
+export type RettssakRequest = { navn: string; unnskyldning: string };
 
 export type RettssakResponse = {
   aktor: string;

@@ -23,8 +23,8 @@ function parseDom(raw: string): RettssakResponse["dom"] {
   return { boller: tall ? begrens(Number(tall[0])) : 42, begrunnelse: cleaned };
 }
 
-export async function holdRettssak(unnskyldning: string): Promise<RettssakResponse> {
-  const sak = `Synderens unnskyldning for å ha gått fra PC-en ulåst:\n"""${unnskyldning}"""`;
+export async function holdRettssak(navn: string, unnskyldning: string): Promise<RettssakResponse> {
+  const sak = `Den siktede heter ${navn}. Tiltal den siktede ved navn minst én gang.\n\n${navn}s unnskyldning for å ha gått fra PC-en ulåst:\n"""${unnskyldning}"""`;
 
   const [aktor, forsvarer] = await Promise.all([
     askGateway(aktorPrompt, sak),
