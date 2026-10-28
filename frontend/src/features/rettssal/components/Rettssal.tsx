@@ -4,7 +4,11 @@ import { useRettssak } from "../api/rettssakApi";
 import { Anke } from "../../anke/components/Anke";
 import { BolleRegn } from "./BolleRegn";
 import { Kanelbolle } from "./Kanelbolle";
+import { BitReklame } from "./BitReklame";
+import { BolleSlackLogo } from "./BolleSlackLogo";
 import { Kjevle } from "./Kjevle";
+import { sukk, vekkLyd } from "../lyd/sukk";
+import { lesOppDom, stoppOpplesning } from "../lyd/opplesning";
 
 const venteTekster = [
   "Bolle-Bjarne henter kaffe …",
@@ -40,9 +44,20 @@ export function Rettssal() {
     return () => clearInterval(id);
   }, [sak.isPending]);
 
+  // Bolle-Bjarne sukker hørbart rett før dommen vises
+  useEffect(() => {
+    if (!sak.data) return;
+    const id = setTimeout(sukk, 900);
+    return () => {
+      clearTimeout(id);
+      stoppOpplesning();
+    };
+  }, [sak.data]);
+
   return (
     <Container size="md" py="xl">
       <Stack gap="lg">
+        <BolleSlackLogo />
         <Stack gap={0} align="center">
           <Text size="64px">⚖️<Kanelbolle size={72} /></Text>
           <Title order={1} size="56px" ta="center" c="orange.3">Bolle-retten</Title>
@@ -50,6 +65,8 @@ export function Rettssal() {
             Du gikk fra PC-en ulåst. Nå står du for retten. Dommer: Bolle-Bjarne (helt upartisk, sier han).
           </Text>
         </Stack>
+
+        <BitReklame />
 
         <Paper p="lg" withBorder>
           <Stack>
@@ -74,7 +91,10 @@ export function Rettssal() {
               color="orange"
               loading={sak.isPending}
               disabled={!navn.trim() || !unnskyldning.trim()}
-              onClick={() => sak.mutate({ navn, unnskyldning })}
+              onClick={() => {
+                vekkLyd();
+                sak.mutate({ navn, unnskyldning });
+              }}
             >
               🔨 Til retten
             </Button>
@@ -104,6 +124,15 @@ export function Rettssal() {
                   {sak.data.dom.boller} <Kanelbolle size={64} />
                 </Text>
                 <Text size="sm" c="dimmed">boller skal leveres til Bolle-Bjarne innen fredag</Text>
+                <BitReklame variant="dom" />
+                <Button
+                  variant="light"
+                  color="orange"
+                  mt="sm"
+                  onClick={() => lesOppDom(sak.data.dom.boller, sak.data.dom.begrunnelse)}
+                >
+                  🔊 Høytlesning av bolle-dom
+                </Button>
                 <Text ta="center" style={{ whiteSpace: "pre-wrap" }}>{sak.data.dom.begrunnelse}</Text>
               </Stack>
             </Paper>

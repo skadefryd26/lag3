@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Avatar, Button, Group, Paper, Stack, Text } from "@mantine/core";
+import { Alert, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useAnke, type AnkeResponse } from "../api/ankeApi";
 import { Kanelbolle } from "../../rettssal/components/Kanelbolle";
 import { Bollefrid } from "./Bollefrid";
@@ -15,13 +15,7 @@ function AnkeInnlegg({ anke, nivaa }: { anke: AnkeResponse; nivaa: number }) {
   return (
     <Paper p="xl" withBorder className="fade-up" style={{ borderColor: "#c0392b", borderWidth: 3 }}>
       <Stack align="center" gap="xs">
-        {nivaa === 1 ? (
-          <Bollefrid size={170} />
-        ) : (
-          <Avatar size={80} radius="xl" color="red">
-            {nivaa === 2 ? "📚" : nivaa === 3 ? "🏛️" : nivaa === 4 ? "🥐" : "🌀"}
-          </Avatar>
-        )}
+        <Bollefrid size={180} sinne={nivaa - 1} navn={anke.dommer} />
         <Text size="sm" c="dimmed" tt="uppercase" fw={700}>
           Anke nr. {nivaa} — {anke.instans}
         </Text>
