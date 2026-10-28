@@ -6,11 +6,13 @@ export type RettssakResponse = {
   dom: { boller: number; begrunnelse: string };
 };
 
-async function postRettssak(unnskyldning: string): Promise<RettssakResponse> {
+export type Sak = { navn: string; unnskyldning: string };
+
+async function postRettssak({ navn, unnskyldning }: Sak): Promise<RettssakResponse> {
   const res = await fetch("/api/rettssak", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ unnskyldning }),
+    body: JSON.stringify({ navn, unnskyldning }),
   });
   const data = await res.json().catch(() => ({ error: "Retten fikk et uleselig svar. *sukk*" }));
   if (!res.ok) throw new Error(data.error ?? "Noe gikk galt i retten.");
