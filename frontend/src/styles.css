@@ -24,3 +24,84 @@ body {
 .fade-up { animation: fadeUp 0.6s ease-out both; }
 .bounce { display: inline-block; animation: bounce 1s ease-in-out infinite; }
 .stamp { animation: stamp 0.7s cubic-bezier(.2,1.6,.4,1) both; }
+
+/* --- Klubbehammeren: slår i kanelbollen mens retten tenker --- */
+
+@keyframes klubbeslag {
+  0%   { transform: rotate(-72deg); }
+  35%  { transform: rotate(-78deg); }   /* liten oppladning */
+  45%  { transform: rotate(10deg); }    /* treff */
+  55%  { transform: rotate(2deg); }     /* sprett */
+  100% { transform: rotate(-72deg); }
+}
+
+@keyframes bolleklem {
+  0%, 40%  { transform: scaleY(1) scaleX(1) translateY(0); }
+  47%      { transform: scaleY(0.6) scaleX(1.3) translateY(6px); }
+  60%      { transform: scaleY(1.1) scaleX(0.93) translateY(-2px); }
+  100%     { transform: scaleY(1) scaleX(1) translateY(0); }
+}
+
+@keyframes smulesprut {
+  0%, 44%  { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  50%      { opacity: 1; }
+  100%     { opacity: 0; transform: translate(var(--dx), -28px) scale(1.4); }
+}
+
+@keyframes skjelv {
+  0%, 40%, 100% { transform: translate(0, 0); }
+  46%  { transform: translate(-7px, 5px) rotate(-0.6deg); }
+  50%  { transform: translate(6px, -4px) rotate(0.5deg); }
+  54%  { transform: translate(-4px, 3px) rotate(-0.3deg); }
+  58%  { transform: translate(3px, -2px); }
+  62%  { transform: translate(-1px, 1px); }
+}
+
+.klubbescene {
+  position: relative;
+  width: 160px;
+  height: 128px;
+}
+
+.klubbescene .klubbe {
+  position: absolute;
+  left: 8px;
+  top: 2px;
+  font-size: 52px;
+  transform-origin: 14% 86%;
+  animation: klubbeslag 0.9s cubic-bezier(.3, 0, .2, 1) infinite;
+}
+
+.klubbescene .bolle-under-klubba {
+  position: absolute;
+  left: 86px;
+  top: 56px;
+  font-size: 44px;
+  transform-origin: 50% 100%;
+  animation: bolleklem 0.9s cubic-bezier(.3, 0, .2, 1) infinite;
+}
+
+.klubbescene .smuler i {
+  position: absolute;
+  left: 104px;
+  top: 62px;
+  font-size: 26px;
+  font-style: normal;
+  color: #e8b06a;
+  animation: smulesprut 0.9s ease-out infinite;
+}
+
+.klubbescene .smuler i:nth-child(1) { --dx: -26px; }
+.klubbescene .smuler i:nth-child(2) { --dx: 4px; }
+.klubbescene .smuler i:nth-child(3) { --dx: 30px; }
+
+body.rister { animation: skjelv 0.9s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .klubbescene .klubbe,
+  .klubbescene .bolle-under-klubba,
+  .klubbescene .smuler i,
+  body.rister {
+    animation: none;
+  }
+}
