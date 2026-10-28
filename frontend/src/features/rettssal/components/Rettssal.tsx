@@ -4,7 +4,7 @@ import { useRettssak } from "../api/rettssakApi";
 import { Anke } from "../../anke/components/Anke";
 import { BolleRegn } from "./BolleRegn";
 import { Kanelbolle } from "./Kanelbolle";
-import { Klubbehammer } from "./Klubbehammer";
+import { Kjevle } from "./Kjevle";
 
 const venteTekster = [
   "Bolle-Bjarne henter kaffe …",
@@ -72,7 +72,7 @@ export function Rettssal() {
             </Button>
             {sak.isPending && (
               <Stack align="center" gap={2}>
-                <Klubbehammer />
+                <Kjevle />
                 <Text ta="center" c="orange.2"><span className="bounce">🥐</span> {venteTekster[venteIndex]}</Text>
               </Stack>
             )}

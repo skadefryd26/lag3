@@ -1,12 +1,13 @@
-import { useEffect, useRef } from "react";
+﻿import { useEffect, useRef } from "react";
 import { Stack, Text } from "@mantine/core";
+import { Kanelbolle } from "./Kanelbolle";
 
 /**
- * Klubbehammeren: mens retten tenker, slår Bolle-Bjarne klubba i kanelbollen.
+ * Kjevla: mens retten tenker, slår Bolle-Bjarne bakstekjevla i kanelbollen.
  * Hvert slag smeller (Web Audio, ingen lydfiler) og rister hele skjermen.
  */
 
-const SLAG_MS = 900; // må stemme med animasjonen under
+const SLAG_MS = 900; // må stemme med animasjonen i styles.css
 
 function smell() {
   type AudioCtor = typeof AudioContext;
@@ -17,7 +18,7 @@ function smell() {
   const ctx = new Ctor();
   const na = ctx.currentTime;
 
-  // Dunk: et kort, dypt treff - klubbe mot bolle.
+  // Dunk: et kort, dypt treff - kjevle mot bolle.
   const osc = ctx.createOscillator();
   const oscGain = ctx.createGain();
   osc.type = "sine";
@@ -29,28 +30,28 @@ function smell() {
   osc.start(na);
   osc.stop(na + 0.28);
 
-  // Smellet: et lite knekk av støy oppå dunken.
+  // Smellet: et lite knekk av stoy oppa dunken.
   const lengde = Math.floor(ctx.sampleRate * 0.08);
   const buffer = ctx.createBuffer(1, lengde, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < lengde; i += 1) {
     data[i] = (Math.random() * 2 - 1) * (1 - i / lengde) ** 3;
   }
-  const støy = ctx.createBufferSource();
-  const støyGain = ctx.createGain();
-  støy.buffer = buffer;
-  støyGain.gain.setValueAtTime(0.25, na);
-  støy.connect(støyGain).connect(ctx.destination);
-  støy.start(na);
+  const stoy = ctx.createBufferSource();
+  const stoyGain = ctx.createGain();
+  stoy.buffer = buffer;
+  stoyGain.gain.setValueAtTime(0.25, na);
+  stoy.connect(stoyGain).connect(ctx.destination);
+  stoy.start(na);
 
   window.setTimeout(() => void ctx.close(), 600);
 }
 
-export function Klubbehammer() {
+export function Kjevle() {
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Første slag kommer når klubba treffer, ikke når komponenten dukker opp.
+    // Første smell kommer når kjevla treffer, ikke når komponenten dukker opp.
     const start = window.setTimeout(() => {
       smell();
       timerRef.current = window.setInterval(smell, SLAG_MS);
@@ -67,12 +68,10 @@ export function Klubbehammer() {
 
   return (
     <Stack align="center" gap={4} py="sm">
-      <div className="klubbescene" aria-label="Bolle-Bjarne slår klubba i en kanelbolle">
-        <span className="klubbe" aria-hidden="true">
-          🔨
-        </span>
+      <div className="klubbescene" aria-label="Bolle-Bjarne slår kjevla i en kanelbolle">
+        <span className="kjevle" aria-hidden="true" />
         <span className="bolle-under-klubba" aria-hidden="true">
-          🥐
+          <Kanelbolle size={46} />
         </span>
         <span className="smuler" aria-hidden="true">
           <i>·</i>
@@ -81,7 +80,7 @@ export function Klubbehammer() {
         </span>
       </div>
       <Text size="sm" c="orange.2">
-        Retten er satt. Bolle-Bjarne banker i bollen.
+        Retten er satt. Bolle-Bjarne kjevler i bollen.
       </Text>
     </Stack>
   );
